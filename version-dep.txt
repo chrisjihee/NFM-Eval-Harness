@@ -14,7 +14,7 @@ astor                                    0.8.1
 attrs                                    26.1.0
 blake3                                   1.0.8
 cachetools                               7.1.1
-cbor2                                    6.1.0
+cbor2                                    6.1.1
 certifi                                  2026.4.22
 cffi                                     2.0.0
 chardet                                  6.0.0.post1
@@ -74,7 +74,7 @@ jsonschema-specifications                2025.9.1
 lark                                     1.2.2
 llguidance                               1.3.0
 llvmlite                                 0.47.0
-lm-eval                                  0.4.13.dev0   /home/chrisjihee/proj/NFM-Eval-Harness/lm-evaluation-harness
+lm-eval                                  0.4.13.dev0   /home/chrisjihee/code/NFM-Eval-Harness/lm-evaluation-harness
 lm-format-enforcer                       0.11.3
 loguru                                   0.7.3
 lxml                                     6.1.0
