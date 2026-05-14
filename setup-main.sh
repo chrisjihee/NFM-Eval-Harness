@@ -2,24 +2,19 @@
 set -e
 
 # 4. Create a new environment
-t1=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] 4. Creating new environment..."
+t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Creating new environment..."
     deactivate 2>/dev/null || true; rm -rf .venv; rm -rf *.egg-info;
     uv venv .venv --python 3.12 --python-preference only-managed --clear
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] 4. Created new environment (Elapsed: $((SECONDS - t1))s)"
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Created new environment (Elapsed: $((SECONDS - t0))s)"
 
-
-# 5. Install the required packages
-t1=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] 5. Installing required packages..."
-    source .venv/bin/activate; uv pip list
-
-# torch 설치
+# 5. Install the required packages: torch
 t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing torch..."
     uv pip install -U cmake ninja wheel packaging setuptools setuptools_scm
     uv pip install torch torchvision torchaudio \
         --index-url https://download.pytorch.org/whl/cu128
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] torch installed (Elapsed: $((SECONDS - t0))s)"
 
-# vllm 설치
+# 5. Install the required packages: vllm
 t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing vllm..."
     uv pip install -U cmake ninja wheel packaging setuptools setuptools_scm
     MAX_JOBS=$(nproc) uv pip install vllm \
@@ -29,7 +24,7 @@ t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing vllm..."
         --index-strategy unsafe-best-match
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] vllm installed (Elapsed: $((SECONDS - t0))s)"
 
-# lm-eval 설치
+# 5. Install the required packages: lm-eval
 t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing lm-eval..."
     rm -rf lm-evaluation-harness
     git clone --depth 1 https://github.com/EleutherAI/lm-evaluation-harness
@@ -41,9 +36,6 @@ t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing lm-eval..."
         --extra-index-url https://download.pytorch.org/whl/cu128 \
         --index-strategy unsafe-best-match
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] lm-eval installed (Elapsed: $((SECONDS - t0))s)"
-
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] 5. Installed required packages (Elapsed: $((SECONDS - t1))s)"
-
 
 # 6. Check the installed packages and their versions
 source .venv/bin/activate; uv pip list > version-dep.txt; uv pip list | grep -E "torch|llm|deepspeed|attn|peft|transformer|accelerate|huggingface|datasets|pandas|numpy|chris|prog"
