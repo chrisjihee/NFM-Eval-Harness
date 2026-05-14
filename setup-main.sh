@@ -28,9 +28,9 @@ echo "[$(date +'%Y-%m-%d %H:%M:%S')] vllm installed (Elapsed: $((SECONDS - t0))s
 
 
 # 5-3. Install the required packages: lm-eval
-t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing lm-eval..."
-    rm -rf lm-evaluation-harness
-    git clone --depth 1 https://github.com/EleutherAI/lm-evaluation-harness
+t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing editable packages..."
+    rm -rf package-src; mkdir package-src; cd package-src
+    rm -rf lm-evaluation-harness; git clone --depth 1 https://github.com/EleutherAI/lm-evaluation-harness.git
     uv pip install -U cmake ninja wheel packaging setuptools setuptools_scm
     uv pip install -e ./lm-evaluation-harness \
         --extra-index-url https://download.pytorch.org/whl/cu128 \
@@ -38,6 +38,7 @@ t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing lm-eval..."
     uv pip install "lm_eval[hf]" "lm_eval[api]" "lm_eval[vllm]" \
         --extra-index-url https://download.pytorch.org/whl/cu128 \
         --index-strategy unsafe-best-match
+    cd ..
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] lm-eval installed (Elapsed: $((SECONDS - t0))s)"
 
 
