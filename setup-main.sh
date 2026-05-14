@@ -7,14 +7,16 @@ t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Creating new environment.
     uv venv .venv --python 3.12 --python-preference only-managed --clear
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] Created new environment (Elapsed: $((SECONDS - t0))s)"
 
-# 5. Install the required packages: torch
+
+# 5-1. Install the required packages: torch
 t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing torch..."
     uv pip install -U cmake ninja wheel packaging setuptools setuptools_scm
     uv pip install torch torchvision torchaudio \
         --index-url https://download.pytorch.org/whl/cu128
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] torch installed (Elapsed: $((SECONDS - t0))s)"
 
-# 5. Install the required packages: vllm
+
+# 5-2. Install the required packages: vllm
 t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing vllm..."
     uv pip install -U cmake ninja wheel packaging setuptools setuptools_scm
     MAX_JOBS=$(nproc) uv pip install vllm \
@@ -24,7 +26,8 @@ t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing vllm..."
         --index-strategy unsafe-best-match
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] vllm installed (Elapsed: $((SECONDS - t0))s)"
 
-# 5. Install the required packages: lm-eval
+
+# 5-3. Install the required packages: lm-eval
 t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing lm-eval..."
     rm -rf lm-evaluation-harness
     git clone --depth 1 https://github.com/EleutherAI/lm-evaluation-harness
@@ -37,13 +40,15 @@ t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Installing lm-eval..."
         --index-strategy unsafe-best-match
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] lm-eval installed (Elapsed: $((SECONDS - t0))s)"
 
-# 6. Check the installed packages and their versions
-source .venv/bin/activate; uv pip list > version-dep.txt; uv pip list | grep -E "torch|llm|deepspeed|attn|peft|transformer|accelerate|huggingface|datasets|pandas|numpy|chris|prog"
-python - <<'PY'
-import sys
-import torch, vllm
 
+# 6. Check the installed packages and their versions
+source .venv/bin/activate; uv pip list > version-dep.txt
+uv pip list | grep -E "torch|trl|llm|deepspeed|attn|peft|transformer|accelerate|huggingface|datasets|pandas|numpy|chris|prog"
+python - <<'PY'
+import torch, torchaudio, torchvision
 print("- torch:", torch.__version__)
+print("- torchaudio:", torchaudio.__version__)
+print("- torchvision:", torchvision.__version__)
 print("- torch.version.cuda:", torch.version.cuda)
 print("- cuda available:", torch.cuda.is_available())
 print("- device count:", torch.cuda.device_count())
@@ -51,6 +56,7 @@ if torch.cuda.is_available():
     print("- device 0:", torch.cuda.get_device_name(0))
     print("- cuda tensor:", torch.tensor([1.0], device="cuda"))
 
+import vllm
 print("- vllm:", vllm.__version__)
 from vllm import LLM, SamplingParams
 print("- import vllm.LLM OK")
