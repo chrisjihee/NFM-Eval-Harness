@@ -170,6 +170,7 @@ temp.*
 data-*
 
 # package source
+lm-evaluation-harness
 package-src
 *-src
 
