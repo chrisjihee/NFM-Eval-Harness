@@ -123,3 +123,21 @@ lm_eval \
   --device cuda:0 \
   --batch_size 8
 ```
+
+---
+
+## LM-Evaluation-Harness(open_telco_otlite)
+
+- open_telco_otlite
+
+```bash
+lm_eval \
+  --model hf \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
+  --include_path open_telco_lm_eval/tasks \
+  --tasks open_telco_otlite \
+  --device cuda:0 \
+  --batch_size auto \
+  --apply_chat_template \
+  --output_path results/open_telco_otlite
+```
