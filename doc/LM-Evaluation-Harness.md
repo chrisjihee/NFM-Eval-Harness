@@ -46,7 +46,7 @@ lm-eval ls tasks
 lm_eval \
   --model hf \
   --tasks hellaswag \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
+  --model_args pretrained=google/gemma-3-4b-it \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -55,7 +55,7 @@ lm_eval \
 lm_eval \
   --model hf \
   --tasks hellaswag \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16 \
+  --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16 \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -63,7 +63,7 @@ lm_eval \
 ```bash
 lm_eval \
   --model vllm \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
+  --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
   --tasks hellaswag \
   --batch_size auto
 ```
@@ -78,7 +78,7 @@ lm_eval \
 lm_eval \
   --model hf \
   --tasks mmlu \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
+  --model_args pretrained=google/gemma-3-4b-it \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -133,7 +133,7 @@ lm_eval \
 ```bash
 lm_eval \
   --model hf \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
+  --model_args pretrained=google/gemma-3-4b-it \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
   --device cuda:3 \
@@ -143,13 +143,25 @@ lm_eval \
 ```
 
 ```bash
-lm_eval \
+CUDA_VISIBLE_DEVICES=3 lm_eval \
   --model vllm \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
+  --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
-  --device cuda:3 \
   --batch_size 4 \
   --apply_chat_template \
   --output_path results/open_telco_otlite-vllm
 ```
+
+```bash
+BACKEND=vllm \
+  VLLM_VISIBLE_DEVICES=2,3 \
+  TENSOR_PARALLEL_SIZE=2 \
+  MODEL_NAME=google/gemma-3-4b-it \
+  ./run_open_telco_otlite.sh
+```
+
+
+- `vllm` backend에서는 현재 `--device cuda:N`가 적용되지 않음
+- 사용할 GPU는 `CUDA_VISIBLE_DEVICES`로 선택
+- 예: `CUDA_VISIBLE_DEVICES=3`이면 vLLM 내부에서는 그 GPU가 `cuda:0`처럼 보임
