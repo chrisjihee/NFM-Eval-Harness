@@ -30,6 +30,10 @@ pip3 install "lm_eval[hf]"
 pip3 install "lm_eval[vllm]"
 pip3 install "lm_eval[api]"
 pip3 show lm_eval
+
+which lm_eval
+lm_eval --help
+lm-eval ls tasks
 ```
 
 ---
@@ -39,12 +43,29 @@ pip3 show lm_eval
 - 태스크 목록 / 실행
 
 ```bash
-lm-eval ls tasks
-lm_eval --model hf \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
+lm_eval \
+  --model hf \
   --tasks hellaswag \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
   --device cuda:0 \
   --batch_size 2
+```
+
+```bash
+lm_eval \
+  --model hf \
+  --tasks hellaswag \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16 \
+  --device cuda:0 \
+  --batch_size 2
+```
+
+```bash
+lm_eval \
+  --model vllm \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
+  --tasks hellaswag \
+  --batch_size auto
 ```
 
 ---
@@ -56,8 +77,8 @@ lm_eval --model hf \
 ```bash
 lm_eval \
   --model hf \
-  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
   --tasks mmlu \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -95,8 +116,9 @@ lm_eval \
 ```bash
 pip install gguf
 
-lm_eval --model hf --model_args \
-  pretrained=/home/std/.lmstudio/models/lmstudio-community/Llama-3.2-1B-Instruct-GGUF,gguf_file=Llama-3.2-1B-Instruct-Q4_K_M.gguf \
+lm_eval \
+  --model hf \
+  --model_args pretrained=/home/std/.lmstudio/models/lmstudio-community/Llama-3.2-1B-Instruct-GGUF,gguf_file=Llama-3.2-1B-Instruct-Q4_K_M.gguf \
   --tasks mmlu \
   --device cuda:0 \
   --batch_size 8
