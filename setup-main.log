@@ -1,9 +1,5 @@
-To run a command as administrator (user "root"), use "sudo <command>".
-See "man sudo_root" for details.
-
-chrisjihee@ptlm3:~/code/NFM-Eval-Harness$  source /home/chrisjihee/code/NFM-Eval-Harness/.venv/bin/activate
-bash: /home/chrisjihee/code/NFM-Eval-Harness/.venv/bin/activate: No such file or directory
-chrisjihee@ptlm3:~/code/NFM-Eval-Harness$ bash reset-main.sh 
+chrisjihee@ptlm4:~/code/NFM-Eval-Harness$ rm cuda_12.8.0_570.86.10_linux.run 
+chrisjihee@ptlm4:~/code/NFM-Eval-Harness$ bash reset-main.sh 
 [CLEAN] deactivate current venv
 [CLEAN] uv cache
 Clearing cache at: /home/chrisjihee/.cache/uv
@@ -16,20 +12,18 @@ Removed 5 files (44B)
 [CLEAN] Hugging Face local cache under .cache_hf
 [CLEAN] compiled extension caches
 [DONE] reset complete
-chrisjihee@ptlm3:~/code/NFM-Eval-Harness$ bash setup-main.sh 
+chrisjihee@ptlm4:~/code/NFM-Eval-Harness$ bash setup-main.sh 
 
-[2026-05-14 21:00:36] 4. Creating new environment...
+[2026-05-15 10:22:05] Creating new environment...
 Using CPython 3.12.13
 Creating virtual environment at: .venv
 Activate with: source .venv/bin/activate
-[2026-05-14 21:00:36] 4. Created new environment (Elapsed: 0s)
+[2026-05-15 10:22:05] Created new environment (Elapsed: 0s)
 
-[2026-05-14 21:00:36] 5. Installing required packages...
-
-[2026-05-14 21:00:36] Installing torch...
-Resolved 7 packages in 272ms
-Prepared 7 packages in 863ms
-Installed 7 packages in 101ms
+[2026-05-15 10:22:05] Installing torch...
+Resolved 7 packages in 234ms
+Prepared 7 packages in 799ms
+Installed 7 packages in 144ms
  + cmake==4.3.2
  + ninja==1.13.0
  + packaging==26.2
@@ -37,10 +31,10 @@ Installed 7 packages in 101ms
  + setuptools-scm==10.0.5
  + vcs-versioning==1.1.1
  + wheel==0.47.0
-Resolved 33 packages in 9.68s
-Prepared 33 packages in 42.21s
-Uninstalled 1 package in 11ms
-Installed 33 packages in 459ms
+Resolved 33 packages in 9.51s
+Prepared 33 packages in 1m 47s
+Uninstalled 1 package in 14ms
+Installed 33 packages in 648ms
  + cuda-bindings==12.9.4
  + cuda-pathfinder==1.2.2
  + cuda-toolkit==12.8.1
@@ -75,23 +69,20 @@ Installed 33 packages in 459ms
  + torchvision==0.26.0+cu128
  + triton==3.6.0
  + typing-extensions==4.15.0
-[2026-05-14 21:01:30] torch installed (Elapsed: 54s)
+[2026-05-15 10:24:04] torch installed (Elapsed: 119s)
 
-[2026-05-14 21:01:30] Installing vllm...
-Resolved 7 packages in 95ms
-Prepared 1 package in 0.32ms
-Uninstalled 1 package in 5ms
-Installed 1 package in 15ms
+[2026-05-15 10:24:04] Installing vllm...
+Resolved 7 packages in 218ms
+Prepared 1 package in 0.54ms
+Uninstalled 1 package in 9ms
+Installed 1 package in 114ms
  - setuptools==70.2.0
  + setuptools==82.0.1
-Resolved 180 packages in 7.90s
-   Building vllm==0.20.2
-   Building vllm==0.20.2
-   Building vllm==0.20.2
-      Built vllm==0.20.2
-Prepared 148 packages in 22m 59s
-Uninstalled 3 packages in 47ms
-Installed 148 packages in 289ms
+Resolved 182 packages in 8.52s
+      Built vllm==0.21.0
+Prepared 150 packages in 16m 13s
+Uninstalled 3 packages in 23ms
+Installed 150 packages in 1.75s
  + aiohappyeyeballs==2.6.1
  + aiohttp==3.13.5
  + aiosignal==1.4.0
@@ -167,8 +158,8 @@ Installed 148 packages in 289ms
  - numpy==2.4.4
  + numpy==2.3.5
  + nvidia-cudnn-frontend==1.18.0
- + nvidia-cutlass-dsl==4.5.0
- + nvidia-cutlass-dsl-libs-base==4.5.0
+ + nvidia-cutlass-dsl==4.4.2
+ + nvidia-cutlass-dsl-libs-base==4.4.2
  + nvidia-ml-py==13.595.45
  + openai==2.36.0
  + openai-harmony==0.0.8
@@ -207,7 +198,7 @@ Installed 148 packages in 289ms
  + quack-kernels==0.4.1
  + referencing==0.37.0
  + regex==2026.5.9
- + requests==2.34.1
+ + requests==2.34.2
  + rich==15.0.0
  + rich-toolkit==0.19.9
  + rignore==0.7.6
@@ -228,45 +219,49 @@ Installed 148 packages in 289ms
  + tiktoken==0.12.0
  + tilelang==0.1.9
  + tokenizers==0.22.2
+ + tokenspeed-mla==0.1.2
+ + tokenspeed-triton==3.7.10.post20260505
  + torch-c-dlpack-ext==0.1.5
  + tqdm==4.67.3
  + transformers==5.8.1
  + typer==0.25.1
  + typing-inspection==0.4.2
  + urllib3==2.7.0
- + uvicorn==0.46.0
+ + uvicorn==0.47.0
  + uvloop==0.22.1
- + vllm==0.20.2+cu128
+ + vllm==0.21.0+cu128
  + watchfiles==1.1.1
  + websockets==16.0
  + xgrammar==0.2.0
  + yarl==1.23.0
  + z3-solver==4.15.4.0
  + zipp==3.23.1
-[2026-05-14 21:24:38] vllm installed (Elapsed: 1388s)
+[2026-05-15 10:40:28] vllm installed (Elapsed: 984s)
 
-[2026-05-14 21:24:38] Installing lm-eval...
+[2026-05-15 10:40:28] Installing editable packages...
 Cloning into 'lm-evaluation-harness'...
 remote: Enumerating objects: 16277, done.
 remote: Counting objects: 100% (16277/16277), done.
 remote: Compressing objects: 100% (6415/6415), done.
 remote: Total 16277 (delta 9893), reused 15917 (delta 9832), pack-reused 0 (from 0)
-Receiving objects: 100% (16277/16277), 4.54 MiB | 2.71 MiB/s, done.
+Receiving objects: 100% (16277/16277), 4.54 MiB | 20.12 MiB/s, done.
 Resolving deltas: 100% (9893/9893), done.
-Resolved 7 packages in 290ms
-Prepared 1 package in 0.64ms
-Uninstalled 1 package in 19ms
-Installed 1 package in 28ms
+Using Python 3.12.13 environment at: /home/chrisjihee/code/NFM-Eval-Harness/.venv
+Resolved 7 packages in 91ms
+Prepared 1 package in 0.27ms
+Uninstalled 1 package in 6ms
+Installed 1 package in 32ms
  - setuptools==80.10.2
  + setuptools==82.0.1
-Resolved 72 packages in 7.59s
+Using Python 3.12.13 environment at: /home/chrisjihee/code/NFM-Eval-Harness/.venv
+Resolved 72 packages in 5.70s
       Built sqlitedict==2.1.0
       Built rouge-score==0.1.2
       Built word2number==1.1
-      Built lm-eval @ file:///home/chrisjihee/code/NFM-Eval-Harness/lm-evaluation-harness
-Prepared 32 packages in 16.80s
+      Built lm-eval @ file:///home/chrisjihee/code/NFM-Eval-Harness/package-src/lm-evaluation-harness
+Prepared 32 packages in 2.50s
 Uninstalled 1 package in 1ms
-Installed 32 packages in 159ms
+Installed 32 packages in 445ms
  + absl-py==2.4.0
  + chardet==6.0.0.post1
  + colorama==0.4.6
@@ -276,7 +271,7 @@ Installed 32 packages in 159ms
  - fsspec==2026.4.0
  + fsspec==2026.2.0
  + joblib==1.5.3
- + lm-eval==0.4.13.dev0 (from file:///home/chrisjihee/code/NFM-Eval-Harness/lm-evaluation-harness)
+ + lm-eval==0.4.13.dev0 (from file:///home/chrisjihee/code/NFM-Eval-Harness/package-src/lm-evaluation-harness)
  + lxml==6.1.0
  + mbstrdecoder==1.1.5
  + more-itertools==11.0.2
@@ -300,21 +295,21 @@ Installed 32 packages in 159ms
  + typepy==1.3.5
  + word2number==1.1
  + xxhash==3.7.0
-Resolved 214 packages in 13.21s
-Prepared 3 packages in 843ms
-Uninstalled 1 package in 17ms
-Installed 4 packages in 19ms
+Using Python 3.12.13 environment at: /home/chrisjihee/code/NFM-Eval-Harness/.venv
+Resolved 216 packages in 8.83s
+Prepared 3 packages in 188ms
+Uninstalled 1 package in 13ms
+Installed 4 packages in 199ms
  + accelerate==1.13.0
  + peft==0.19.1
  - setuptools==82.0.1
  + setuptools==80.10.2
  + tenacity==9.1.4
-[2026-05-14 21:25:22] lm-eval installed (Elapsed: 44s)
-[2026-05-14 21:25:22] 5. Installed required packages (Elapsed: 1486s)
+[2026-05-15 10:40:49] lm-eval installed (Elapsed: 21s)
 accelerate                               1.13.0
 datasets                                 4.8.5
 huggingface-hub                          1.14.0
-lm-eval                                  0.4.13.dev0   /home/chrisjihee/code/NFM-Eval-Harness/lm-evaluation-harness
+lm-eval                                  0.4.13.dev0         /home/chrisjihee/code/NFM-Eval-Harness/package-src/lm-evaluation-harness
 numpy                                    2.3.5
 pandas                                   3.0.3
 peft                                     0.19.1
@@ -323,13 +318,15 @@ torch-c-dlpack-ext                       0.1.5
 torchaudio                               2.11.0+cu128
 torchvision                              0.26.0+cu128
 transformers                             5.8.1
-vllm                                     0.20.2+cu128
+vllm                                     0.21.0+cu128
 - torch: 2.11.0+cu128
+- torchaudio: 2.11.0+cu128
+- torchvision: 0.26.0+cu128
 - torch.version.cuda: 12.8
 - cuda available: True
 - device count: 4
-- device 0: NVIDIA RTX A6000
+- device 0: NVIDIA L40S
 - cuda tensor: tensor([1.], device='cuda:0')
-- vllm: 0.20.2
+- vllm: 0.21.0
 - import vllm.LLM OK
-chrisjihee@ptlm3:~/code/NFM-Eval-Harness$ 
+chrisjihee@ptlm4:~/code/NFM-Eval-Harness$ 
