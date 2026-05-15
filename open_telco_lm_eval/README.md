@@ -33,9 +33,9 @@ TASKS=open_telco_teleqna,open_telco_oranbench ./run_open_telco_otlite.sh
 
 ## Notes
 
-- `teleqna`, `oranbench`, and `srsranbench` are implemented as
+- `teleqna`, `oranbench`, `srsranbench`, and `3gpp_tsg` are implemented as
   `multiple_choice` tasks.
-- `3gpp_tsg` is implemented as a simple `generate_until` task with
-  `exact_match`.
+- `3gpp_tsg` uses a fixed 16-label working-group choice set so the score is
+  based on label classification rather than free-form string matching.
 - This is an MVP baseline harness, not a full reproduction of the official
   GSMA evaluation stack.

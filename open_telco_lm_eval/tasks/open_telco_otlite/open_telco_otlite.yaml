@@ -11,9 +11,6 @@ aggregate_metric_list:
   - metric: acc_norm
     aggregation: mean
     weight_by_size: true
-  - metric: exact_match
-    aggregation: mean
-    weight_by_size: true
 metadata:
   version: 0.1
   description: Open Telco ot-lite starter pack for NFM baseline evaluation
