@@ -136,8 +136,8 @@ lm_eval \
   --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
-  --device cuda:0 \
-  --batch_size 2 \
+  --device cuda:3 \
+  --batch_size 4 \
   --apply_chat_template \
   --output_path results/open_telco_otlite
 ```
@@ -148,7 +148,8 @@ lm_eval \
   --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
-  --batch_size 2 \
+  --device cuda:3 \
+  --batch_size 4 \
   --apply_chat_template \
   --output_path results/open_telco_otlite
 ```
