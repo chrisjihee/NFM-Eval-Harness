@@ -139,7 +139,7 @@ lm_eval \
   --device cuda:3 \
   --batch_size 4 \
   --apply_chat_template \
-  --output_path results/open_telco_otlite
+  --output_path results/open_telco_otlite-hf
 ```
 
 ```bash
@@ -151,5 +151,5 @@ lm_eval \
   --device cuda:3 \
   --batch_size 4 \
   --apply_chat_template \
-  --output_path results/open_telco_otlite
+  --output_path results/open_telco_otlite-vllm
 ```
