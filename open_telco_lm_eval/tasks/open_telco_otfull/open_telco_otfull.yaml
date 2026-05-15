@@ -1,0 +1,15 @@
+group: open_telco_otfull
+task:
+  - open_telco_full_teleqna
+  - open_telco_full_teletables
+  - open_telco_full_oranbench
+  - open_telco_full_srsranbench
+  - open_telco_full_telemath
+  - open_telco_full_telelogs
+  - open_telco_full_3gpp_tsg
+aggregate_metric_list:
+  - metric: acc
+    aggregation: mean
+metadata:
+  version: 0.2
+  description: Open Telco ot-full 7-task leaderboard-style baseline for NFM evaluation

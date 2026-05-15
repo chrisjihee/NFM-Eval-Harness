@@ -129,6 +129,8 @@ lm_eval \
 ## LM-Evaluation-Harness(open_telco_otlite)
 
 - open_telco_otlite
+- leaderboard-style 7-task pack
+- teleqna, teletables, oranbench, srsranbench, telemath, telelogs, 3gpp_tsg
 
 ```bash
 lm_eval \
@@ -171,3 +173,52 @@ BACKEND=vllm \
   MODEL_NAME=google/gemma-3-4b-it \
   ./run_open_telco_otlite.sh
 ```
+
+```bash
+TASKS=open_telco_otlite_core4 \
+  MODEL_NAME=google/gemma-3-4b-it \
+  ./run_open_telco_otlite.sh
+```
+
+- `open_telco_otlite` group score는 7개 벤치마크의 `acc` 단순 평균으로 집계
+- `open_telco_otlite_core4`는 기존 4-task 실험 재현용 legacy 그룹
+
+---
+
+## LM-Evaluation-Harness(open_telco_otfull)
+
+- open_telco_otfull
+- leaderboard-style 7-task pack
+- teleqna, teletables, oranbench, srsranbench, telemath, telelogs, 3gpp_tsg
+
+```bash
+BACKEND=hf \
+  DEVICE=cuda:0 \
+  MODEL_NAME=google/gemma-3-4b-it \
+  BATCH_SIZE=4 \
+  OUTPUT_PATH=results/otfull-gemma3-4b-hf \
+  ./run_open_telco_otfull.sh
+```
+
+```bash
+BACKEND=vllm \
+  VLLM_VISIBLE_DEVICES=3 \
+  MODEL_NAME=google/gemma-3-4b-it \
+  BATCH_SIZE=4 \
+  OUTPUT_PATH=results/otfull-gemma3-4b-vllm \
+  ./run_open_telco_otfull.sh
+```
+
+```bash
+BACKEND=vllm \
+  VLLM_VISIBLE_DEVICES=2,3 \
+  TENSOR_PARALLEL_SIZE=2 \
+  MODEL_NAME=google/gemma-3-4b-it \
+  BATCH_SIZE=4 \
+  OUTPUT_PATH=results/otfull-gemma3-4b-vllm-tp2 \
+  ./run_open_telco_otfull.sh
+```
+
+- `open_telco_otfull` group score는 7개 벤치마크의 `acc` 단순 평균으로 집계
+- `3gpp_tsg`, `telemath`, `telelogs`는 generation 후 custom parser로 채점
+- `teletables`는 `GSMA/ot-full` 공개 row만으로도 실행되며, 원본 표 파일이 있으면 `TELETABLES_ROOT=/path/to/tables`를 주어 프롬프트에 자동 주입 가능

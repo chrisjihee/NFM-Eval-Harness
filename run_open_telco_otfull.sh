@@ -1,0 +1,61 @@
+#!/bin/bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ ! -d "${ROOT_DIR}/.venv" ]]; then
+  echo "Missing virtual environment at ${ROOT_DIR}/.venv" >&2
+  exit 1
+fi
+
+source "${ROOT_DIR}/.venv/bin/activate"
+
+MODEL_NAME="${MODEL_NAME:-google/gemma-3-4b-it}"
+BACKEND="${BACKEND:-hf}"
+DEVICE="${DEVICE:-cuda:0}"
+BATCH_SIZE="${BATCH_SIZE:-auto}"
+OUTPUT_PATH="${OUTPUT_PATH:-${ROOT_DIR}/results/open_telco_otfull}"
+TASKS="${TASKS:-open_telco_otfull}"
+DTYPE="${DTYPE:-bfloat16}"
+TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
+DATA_PARALLEL_SIZE="${DATA_PARALLEL_SIZE:-1}"
+GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.7}"
+MAX_MODEL_LEN="${MAX_MODEL_LEN:-}"
+VLLM_VISIBLE_DEVICES="${VLLM_VISIBLE_DEVICES:-${CUDA_VISIBLE_DEVICES:-}}"
+
+case "${BACKEND}" in
+  hf)
+    lm_eval \
+      --model hf \
+      --model_args "pretrained=${MODEL_NAME}" \
+      --include_path "${ROOT_DIR}/open_telco_lm_eval/tasks" \
+      --tasks "${TASKS}" \
+      --device "${DEVICE}" \
+      --batch_size "${BATCH_SIZE}" \
+      --apply_chat_template \
+      --output_path "${OUTPUT_PATH}"
+    ;;
+  vllm)
+    if [[ -n "${VLLM_VISIBLE_DEVICES}" ]]; then
+      export CUDA_VISIBLE_DEVICES="${VLLM_VISIBLE_DEVICES}"
+    fi
+
+    MODEL_ARGS="pretrained=${MODEL_NAME},dtype=${DTYPE},tensor_parallel_size=${TENSOR_PARALLEL_SIZE},data_parallel_size=${DATA_PARALLEL_SIZE},gpu_memory_utilization=${GPU_MEMORY_UTILIZATION}"
+    if [[ -n "${MAX_MODEL_LEN}" ]]; then
+      MODEL_ARGS="${MODEL_ARGS},max_model_len=${MAX_MODEL_LEN}"
+    fi
+
+    lm_eval \
+      --model vllm \
+      --model_args "${MODEL_ARGS}" \
+      --include_path "${ROOT_DIR}/open_telco_lm_eval/tasks" \
+      --tasks "${TASKS}" \
+      --batch_size "${BATCH_SIZE}" \
+      --apply_chat_template \
+      --output_path "${OUTPUT_PATH}"
+    ;;
+  *)
+    echo "Unsupported BACKEND: ${BACKEND}. Use 'hf' or 'vllm'." >&2
+    exit 1
+    ;;
+esac

@@ -1,16 +1,15 @@
 group: open_telco_otlite
 task:
   - open_telco_teleqna
+  - open_telco_teletables
   - open_telco_oranbench
   - open_telco_srsranbench
-  - open_telco_3gpp_tsg
+  - open_telco_telemath
+  - open_telco_telelogs
+  - open_telco_3gpp_tsg_gen
 aggregate_metric_list:
   - metric: acc
     aggregation: mean
-    weight_by_size: true
-  - metric: acc_norm
-    aggregation: mean
-    weight_by_size: true
 metadata:
-  version: 0.1
-  description: Open Telco ot-lite starter pack for NFM baseline evaluation
+  version: 0.2
+  description: Open Telco ot-lite 7-task leaderboard-style comparison pack

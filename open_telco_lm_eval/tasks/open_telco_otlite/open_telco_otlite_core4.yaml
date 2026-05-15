@@ -1,0 +1,16 @@
+group: open_telco_otlite_core4
+task:
+  - open_telco_teleqna
+  - open_telco_oranbench
+  - open_telco_srsranbench
+  - open_telco_3gpp_tsg
+aggregate_metric_list:
+  - metric: acc
+    aggregation: mean
+    weight_by_size: true
+  - metric: acc_norm
+    aggregation: mean
+    weight_by_size: true
+metadata:
+  version: 0.1
+  description: Open Telco ot-lite original 4-task starter pack for NFM baseline evaluation
