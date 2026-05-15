@@ -141,3 +141,14 @@ lm_eval \
   --apply_chat_template \
   --output_path results/open_telco_otlite
 ```
+
+```bash
+lm_eval \
+  --model vllm \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
+  --include_path open_telco_lm_eval/tasks \
+  --tasks open_telco_otlite \
+  --batch_size auto \
+  --apply_chat_template \
+  --output_path results/open_telco_otlite
+```
