@@ -1,0 +1,1 @@
+{"run_id":"otlite-gemma3-4b-hf-main","date":"2026-05-15","model":"google/gemma-3-4b-it","backend":"hf","tasks":"open_telco_otlite","score":{"open_telco_otlite_acc":0.3718},"result_path":"results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.md","notes":"First 7-task ot-lite baseline; truncation warnings observed for long prompts."}

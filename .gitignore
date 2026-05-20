@@ -179,4 +179,8 @@ related-repo
 *-repo
 
 # output
-outputs*/
+outputs/*
+!outputs/
+!outputs/latest-summary.md
+!outputs/run-index.jsonl
+outputs-*/
