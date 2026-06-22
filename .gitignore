@@ -168,15 +168,12 @@ gradio_cached_examples
 ~$*.*
 temp.*
 data-*
+.omc
+.omx
 
 # package source
-lm-evaluation-harness
 package-src
 *-src
-
-# reference
-related-repo
-*-repo
 
 # output
 outputs/*
