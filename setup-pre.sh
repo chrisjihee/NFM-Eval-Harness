@@ -4,6 +4,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 $HOME/.local/bin/uv python install 3.12
 $HOME/.local/bin/uv python update-shell
 # exit
+uv self update
 
 # 2. Install CUDA toolkit (cf. https://developer.nvidia.com/cuda-12-8-0-download-archive)
 wget https://developer.download.nvidia.com/compute/cuda/12.8.0/local_installers/cuda_12.8.0_570.86.10_linux.run
