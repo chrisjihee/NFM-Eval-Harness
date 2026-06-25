@@ -1,6 +1,6 @@
 # Progress
 
-마지막 갱신: 2026-05-20
+마지막 갱신: 2026-06-26
 
 ## 현재 상태
 
@@ -24,16 +24,35 @@
 - 결과 파일:
   `results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.md`
 
+## 2026-06 패키징 pass (진행 중)
+
+deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
+`.omc/plans/nfm-eval-harness-consensus-plan.md`.
+
+완료(GPU 불필요):
+- Claude/GPT 중복 문서 6종을 한국어 중심 `CLAUDE.md`/`HANDOFF.md`/`FIRST_PROMPT.md`로
+  통합하고 분리본은 `git rm`.
+- **집계방식 정정**: local group acc `0.3718`은 sample-weighted(teleqna 1000샘플 지배),
+  7-task 단순평균은 `0.259`. public `0.397`은 unweighted task mean →
+  동일기준 실제 격차 약 `−13.8%p`(후보, 단정 아님). 최대 격차는 객관식 MC 3종.
+- `scripts/smoke_test.sh` + `make smoke`(GPU 없이 task loading 검증) 추가 →
+  18개 task(otlite/otlite_core4/otfull) 전부 로드 OK.
+- `scripts/compare_gsma_leaderboard.py`(local↔`GSMA/leaderboard` delta, 가중/비가중 병기) 추가.
+- `run_open_telco_*.sh`에 `LIMIT`/`CONFIRM_FULL_RUN` 가드 추가(가드 없는 full run 거부).
+- 추적 문서의 raw `lm_eval` 실행 예시를 전부 `--limit`/가드 형태로 교체.
+- `lm_eval`(pin `97a5e2c7`, `v0.4.12-12-g97a5e2c7`)를 `.venv`에 editable 설치
+  (`--no-deps` + 보조 deps 6종, 하드핀 torch/vllm/transformers/datasets 불변 확인).
+- Phase 0.5(attribution probe): `GSMA/leaderboard`에는 variant/extraction 컬럼이 없어
+  public `gemma3-4b` variant pin 불가 → 재현 주장은 bounded 유지, `*_mcgen`는 비-default 동결.
+
 ## 다음 작업
 
-- 전체 GPU benchmark 없이 task loading만 확인하는 작은 smoke-test 경로를
-  추가합니다.
-- `results/`에 raw JSON/Markdown 결과를 계속 git으로 추적할지, 앞으로는
-  선별된 summary만 추적할지 결정합니다.
-- 같은 모델에 대해 `hf`와 `vllm` backend 결과를 비교하고 run index에 남깁니다.
-- generation-heavy `ot-lite` task에서 관찰된 prompt truncation warning을
-  조사합니다.
-- `telemath`, `telelogs`, `3gpp_tsg_gen` parser 안정성을 개선합니다.
+- Phase 3: 객관식 MC의 generation-based 변형 `open_telco_*_mcgen`를 **비-default 실험 task**로 추가
+  (leak-guard 적용, default scoring 동결), 생성형 truncation/parser 개선 + pytest.
+- Phase 4(GPU, 단계 승인): Gemma3-4B ot-lite/ot-full 재실행, `hf`↔`vllm` parity,
+  `Qwen/Qwen2.5-7B-Instruct` baseline, 수정 before/after 측정.
+- generation-heavy task의 left-truncation(2902→2024 tokens) 완화 효과 측정.
+- TeleTables 원본 표 데이터(`TELETABLES_ROOT`) 확보 시도.
 
 ## Handoff Notes
 
