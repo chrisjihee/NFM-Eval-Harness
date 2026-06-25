@@ -337,3 +337,106 @@ def doc_to_text_teletables(doc: dict[str, Any]) -> str:
         f"{_format_choices(doc['choices'])}\n\n"
         "Answer:"
     )
+
+
+# ---------------------------------------------------------------------------
+# NON-DEFAULT experimental: generation-based multiple-choice scoring.
+#
+# These helpers power an *additive* generate_until variant of the standard
+# multiple_choice tasks. They never change the behaviour of the default
+# multiple_choice scoring path (doc_to_text_mc / doc_to_choice / acc / acc_norm).
+#
+# Integrity note: the rendered prompt depends only on doc["question"] and
+# doc["choices"]; it never reads doc["answer"] / gold. The same doc always
+# renders the same prompt regardless of the gold label (no answer leakage).
+# ---------------------------------------------------------------------------
+
+_MC_GEN_ANSWER_CUE_RE = re.compile(
+    r"(?:final answer|answer)\s*(?:is|:)\s*\**\s*([A-Za-z])\b",
+    flags=re.IGNORECASE,
+)
+_MC_GEN_FIRST_LETTER_RE = re.compile(r"\b([A-Za-z])\b")
+
+
+def doc_to_text_mc_gen(doc: dict[str, Any]) -> str:
+    """Render a generation-style multiple-choice prompt.
+
+    Builds the same question + choices context as ``doc_to_text_mc`` but ends
+    with a single-letter response instruction. Uses only ``doc["question"]``
+    and ``doc["choices"]`` -- never ``doc["answer"]`` -- so the prompt is
+    independent of the gold label (no answer leakage).
+    """
+    question = doc["question"].strip()
+    choices = doc["choices"]
+    return (
+        "You are answering a telecommunications domain benchmark question.\n"
+        "Select the single best answer.\n\n"
+        f"Question: {question}\n"
+        "Choices:\n"
+        f"{_format_choices(choices)}\n\n"
+        "Respond with ONLY the letter of the correct choice "
+        "(for example: A). Do not explain.\n"
+        "Answer:"
+    )
+
+
+def extract_mc_letter(text: str, num_choices: int) -> int | None:
+    """Extract a choice letter (A..) from generated text -> 0-based index.
+
+    Resolution order:
+      1. ``\\boxed{X}`` -- last boxed single letter in range.
+      2. A letter following an "answer is" / "answer:" / "final answer" cue.
+      3. The first standalone letter (word boundary, case-insensitive) in range.
+
+    Returns the 0-based choice index, or ``None`` if no in-range letter is
+    found. ``num_choices`` bounds the valid letters to A..(A+num_choices-1).
+    """
+    if not isinstance(text, str):
+        return None
+    if not isinstance(num_choices, int) or num_choices <= 0:
+        return None
+
+    max_choices = min(num_choices, len(CHOICE_LABELS))
+
+    def _to_index(letter: str) -> int | None:
+        idx = ord(letter.upper()) - ord("A")
+        if 0 <= idx < max_choices:
+            return idx
+        return None
+
+    for candidate in reversed(BOXED_RE.findall(text)):
+        candidate = candidate.strip()
+        if len(candidate) == 1 and candidate.isalpha():
+            idx = _to_index(candidate)
+            if idx is not None:
+                return idx
+
+    cue = _MC_GEN_ANSWER_CUE_RE.search(text)
+    if cue:
+        idx = _to_index(cue.group(1))
+        if idx is not None:
+            return idx
+
+    for match in _MC_GEN_FIRST_LETTER_RE.finditer(text):
+        idx = _to_index(match.group(1))
+        if idx is not None:
+            return idx
+
+    return None
+
+
+def process_results_mc_gen(
+    doc: dict[str, Any], results: list[str]
+) -> dict[str, float]:
+    """Score a generation-based multiple-choice prediction.
+
+    Extracts a predicted 0-based index from ``results[0]`` via
+    ``extract_mc_letter`` and compares it to ``int(doc["answer"])`` (the same
+    0-based choices index used by the default multiple_choice scoring).
+    """
+    text = results[0] if results else ""
+    prediction = extract_mc_letter(text, len(doc["choices"]))
+    gold = int(doc["answer"])
+    if prediction is None:
+        return {"acc": 0.0}
+    return {"acc": 1.0 if prediction == gold else 0.0}
