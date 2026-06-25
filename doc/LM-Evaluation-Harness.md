@@ -47,6 +47,7 @@ lm_eval \
   --model hf \
   --tasks hellaswag \
   --model_args pretrained=google/gemma-3-4b-it \
+  --limit 5 \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -56,6 +57,7 @@ lm_eval \
   --model hf \
   --tasks hellaswag \
   --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16 \
+  --limit 5 \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -65,6 +67,7 @@ lm_eval \
   --model vllm \
   --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
   --tasks hellaswag \
+  --limit 5 \
   --batch_size auto
 ```
 
@@ -79,6 +82,7 @@ lm_eval \
   --model hf \
   --tasks mmlu \
   --model_args pretrained=google/gemma-3-4b-it \
+  --limit 5 \
   --device cuda:0 \
   --batch_size 2
 ```
@@ -120,6 +124,7 @@ lm_eval \
   --model hf \
   --model_args pretrained=/home/std/.lmstudio/models/lmstudio-community/Llama-3.2-1B-Instruct-GGUF,gguf_file=Llama-3.2-1B-Instruct-Q4_K_M.gguf \
   --tasks mmlu \
+  --limit 5 \
   --device cuda:0 \
   --batch_size 8
 ```
@@ -132,12 +137,25 @@ lm_eval \
 - leaderboard-style 7-task pack
 - teleqna, teletables, oranbench, srsranbench, telemath, telelogs, 3gpp_tsg
 
+권장: 전체 GPU run은 runner 스크립트의 가드를 거쳐 실행합니다.
+
+```bash
+# bounded smoke (limit 강제)
+LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+
+# full run (명시적 확인 필요)
+CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+```
+
+`lm_eval` 를 직접 호출해야 하면 반드시 `--limit N` 을 동반합니다 (아래 예시는 모두 `--limit 5`).
+
 ```bash
 lm_eval \
   --model hf \
   --model_args pretrained=google/gemma-3-4b-it \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
+  --limit 5 \
   --device cuda:0 \
   --batch_size 4 \
   --apply_chat_template \
@@ -150,6 +168,7 @@ CUDA_VISIBLE_DEVICES=1 lm_eval \
   --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
+  --limit 5 \
   --batch_size 4 \
   --apply_chat_template \
   --output_path results/otlite-gemma3-4b-vllm-1
@@ -161,13 +180,17 @@ CUDA_VISIBLE_DEVICES=2,3 lm_eval \
   --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=2,data_parallel_size=1,gpu_memory_utilization=0.5 \
   --include_path open_telco_lm_eval/tasks \
   --tasks open_telco_otlite \
+  --limit 5 \
   --batch_size 4 \
   --apply_chat_template \
   --output_path results/otlite-gemma3-4b-vllm-2
 ```
 
+전체 group run (multi-GPU vLLM)은 runner 가드로 실행합니다.
+
 ```bash
-BACKEND=vllm \
+CONFIRM_FULL_RUN=1 \
+  BACKEND=vllm \
   VLLM_VISIBLE_DEVICES=2,3 \
   TENSOR_PARALLEL_SIZE=2 \
   MODEL_NAME=google/gemma-3-4b-it \
@@ -175,12 +198,13 @@ BACKEND=vllm \
 ```
 
 ```bash
-TASKS=open_telco_otlite_core4 \
+CONFIRM_FULL_RUN=1 \
+  TASKS=open_telco_otlite_core4 \
   MODEL_NAME=google/gemma-3-4b-it \
   ./run_open_telco_otlite.sh
 ```
 
-- `open_telco_otlite` group score는 7개 벤치마크의 `acc` 단순 평균으로 집계
+- `open_telco_otlite` group score는 7개 벤치마크 `acc` 의 **sample-weighted** 평균으로 집계 (lm_eval fork 기본 `weight_by_size=True`, group YAML 미override; teleqna 1000샘플 지배). 동일가중 task mean은 별도 계산
 - `open_telco_otlite_core4`는 기존 4-task 실험 재현용 legacy 그룹
 
 ---
@@ -191,8 +215,12 @@ TASKS=open_telco_otlite_core4 \
 - leaderboard-style 7-task pack
 - teleqna, teletables, oranbench, srsranbench, telemath, telelogs, 3gpp_tsg
 
+전체 GPU run이므로 각 명령에 `CONFIRM_FULL_RUN=1` 가드를 동반합니다. 빠른 확인은
+`CONFIRM_FULL_RUN=1` 대신 `LIMIT=5` 를 사용하세요.
+
 ```bash
-BACKEND=hf \
+CONFIRM_FULL_RUN=1 \
+  BACKEND=hf \
   DEVICE=cuda:0 \
   MODEL_NAME=google/gemma-3-4b-it \
   BATCH_SIZE=4 \
@@ -201,7 +229,8 @@ BACKEND=hf \
 ```
 
 ```bash
-BACKEND=vllm \
+CONFIRM_FULL_RUN=1 \
+  BACKEND=vllm \
   VLLM_VISIBLE_DEVICES=3 \
   MODEL_NAME=google/gemma-3-4b-it \
   BATCH_SIZE=4 \
@@ -210,7 +239,8 @@ BACKEND=vllm \
 ```
 
 ```bash
-BACKEND=vllm \
+CONFIRM_FULL_RUN=1 \
+  BACKEND=vllm \
   VLLM_VISIBLE_DEVICES=2,3 \
   TENSOR_PARALLEL_SIZE=2 \
   MODEL_NAME=google/gemma-3-4b-it \
@@ -219,6 +249,6 @@ BACKEND=vllm \
   ./run_open_telco_otfull.sh
 ```
 
-- `open_telco_otfull` group score는 7개 벤치마크의 `acc` 단순 평균으로 집계
+- `open_telco_otfull` group score는 7개 벤치마크 `acc` 의 **sample-weighted** 평균으로 집계 (lm_eval fork 기본 `weight_by_size=True`, group YAML 미override)
 - `3gpp_tsg`, `telemath`, `telelogs`는 generation 후 custom parser로 채점
 - `teletables`는 `GSMA/ot-full` 공개 row만으로도 실행되며, 원본 표 파일이 있으면 `TELETABLES_ROOT=/path/to/tables`를 주어 프롬프트에 자동 주입 가능

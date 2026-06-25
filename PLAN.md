@@ -48,11 +48,16 @@ lm_eval \
   --model_args pretrained=meta-llama/Llama-3.2-3B-Instruct,dtype=bfloat16 \
   --include_path ./open_telco_lm_eval/tasks \
   --tasks open_telco_teleqna,open_telco_3gpp_tsg,open_telco_telemath \
+  --limit 5 \
   --device cuda:0 \
   --batch_size auto \
   --apply_chat_template \
   --output_path ./results/open_telco_baseline
 ```
+
+위는 `--limit 5` 를 동반한 bounded smoke 예시입니다. 전체 run은 가드를 거쳐 실행합니다.
+bounded smoke: `LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh`,
+full run: `CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh`.
 
 예를 들어 `3gpp_tsg`는 처음에는 generation 방식으로 단순 구현할 수 있습니다.
 
