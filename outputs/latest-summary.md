@@ -27,8 +27,16 @@
 - `Qwen/Qwen2.5-7B-Instruct` | `hf` | `open_telco_otlite`: default group `0.423`(uw 0.286), mcgen group `0.732`
 - 결과: `results/otlite-qwen2.5-7b-hf-1/`
 
+## ot-full 최초 full run (public와 동일 split, 2026-06-26)
+
+- 모델: `google/gemma-3-4b-it` | Backend: `vllm`(tp=2) | 16,866 docs
+- default unweighted **0.251** vs public **0.397** (delta −0.146); group(sample-weighted) 0.354
+- **mcgen near-reproduction (대규모 N)**: teleqna 0.422→**0.630**(pub 0.652, N=10k), oranbench 0.353→**0.635**(pub 0.660), srsranbench 0.551→**0.777**(pub 0.740)
+- teletables degraded(표 데이터 부재), generation(telemath/3gpp) 여전히 낮음(별도 원인)
+- 결과: `results/otfull-gemma3-4b-vllm-1/` · 비교: `outputs/gemma3-4b-otfull-leaderboard-delta.md`
+
 ## 미실행 / 다음 단계
 
-- `open_telco_otfull` 최초 full run (critical 게이트 — 사용자 승인 후).
 - generation-budget 실험(`max_gen_toks`↑ + `until` 완화)로 telemath/3gpp 저점수 원인 확정.
 - TeleTables 원본 표(`TELETABLES_ROOT`) 확보 시 teletables 재측정.
+- (선택) `*_mcgen` 공식 추출 방식 확인 시 default 승격 재검토(별도 승인).

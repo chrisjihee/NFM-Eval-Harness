@@ -12,6 +12,7 @@
 | 2026-06-26 | `otlite-gemma3-4b-hf-maxlen8192` | `google/gemma-3-4b-it` | `hf` | `open_telco_otlite` | `0.366 acc` | `MAX_LENGTH=8192`. truncation 0건이나 generation 점수 불변(=truncation 원인 아님). |
 | 2026-06-26 | `otlite-gemma3-4b-vllm-3` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otlite` | `0.365 acc` | hf와 parity(노이즈 내). |
 | 2026-06-26 | `otlite-qwen2.5-7b-hf-1` | `Qwen/Qwen2.5-7B-Instruct` | `hf` | `open_telco_otlite`(+`_mcgen`) | `0.423 acc` (uw 0.286) | 비교 모델. mcgen group=`0.732`. |
+| 2026-06-26 | `otfull-gemma3-4b-vllm-1` | `google/gemma-3-4b-it` | `vllm`(tp=2) | `open_telco_otfull`(+`_mcgen`) | `0.354 acc` (uw 0.251) | **public와 동일 split**. mcgen group=`0.648`. teletables degraded. |
 
 ## 2026-05-15: Gemma 3 4B IT On ot-lite
 
@@ -78,3 +79,34 @@ Task별 점수:
 - gemma `open_telco_otlite` group acc `0.370`은 **sample-weighted**(teleqna 1000샘플 지배). 7-task **단순평균 0.255**.
 - public `0.397`은 unweighted task mean → 동일기준 delta `−0.142`(후보 격차).
 - 비교 산출물: `outputs/gemma3-4b-leaderboard-delta.md` (`scripts/compare_gsma_leaderboard.py`).
+
+## 2026-06-26 (2): ot-full 최초 full run (gemma-3-4b-it, vLLM tp=2, public와 동일 split)
+
+16,866 docs (teleqna 10000 등). 결과: `results/otfull-gemma3-4b-vllm-1/`, 비교: `outputs/gemma3-4b-otfull-leaderboard-delta.md`.
+
+### default vs public (동일 split)
+
+| public_column | local default | public gemma3-4b | delta |
+|---|---:|---:|---:|
+| `teleqna` | 0.4220 | 0.6523 | −0.2303 |
+| `teletables` | 0.2120 | 0.2733 | −0.0613 (degraded: TELETABLES_ROOT 없음) |
+| `oranbench` | 0.3533 | 0.6600 | −0.3067 |
+| `srsranbench` | 0.5513 | 0.7400 | −0.1887 |
+| `telemath` | 0.0080 | 0.1367 | −0.1287 |
+| `telelogs` | 0.1262 | 0.1167 | +0.0095 |
+| `three_gpp` | 0.0865 | 0.2000 | −0.1135 |
+| **unweighted mean** | **0.2513** | **0.3970** | **−0.1457** |
+| group acc (sample-weighted) | 0.3540 | — | — |
+
+### mcgen(generation MC) vs public — 동일 split, 대규모 N에서 near-reproduction
+
+| MC task | default(LL) | **mcgen(gen)** | public | N |
+|---|---:|---:|---:|---:|
+| `teleqna` | 0.4220 | **0.6302** | 0.6523 | 10000 |
+| `oranbench` | 0.3533 | **0.6347** | 0.6600 | 1500 |
+| `srsranbench` | 0.5513 | **0.7770** | 0.7400 | 1502 |
+| group | 0.40대 | **0.6477** | — | — |
+
+- **결론(강화)**: public과 동일 split + 대규모 N(teleqna 10k)에서도 generation-based MC가 public에 근접 → 공식 GSMA가 generation 답 추출 방식이라는 가설을 강하게 지지. (여전히 공식 미확정 → `*_mcgen` 비-default 유지.)
+- teletables는 표 데이터 부재로 degraded(−0.061), generation(telemath/3gpp)은 ot-lite와 동일하게 낮음(scoring 아닌 generation budget/parser 이슈). telelogs는 public과 동률.
+- 실행 메모: vLLM tp=2 종료 시 NCCL/c10 teardown 경고가 로그에 남으나 평가 결과(JSON, full n-samples)는 정상 생성됨.
