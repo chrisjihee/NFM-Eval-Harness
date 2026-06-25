@@ -122,7 +122,7 @@ PY
 if [[ "${VLLM_GENERATE_CHECK:-1}" == "1" ]]; then
     echo -e "\nChecking vLLM GENERATION (real LLM.generate, not just import)..."
     VLLM_CHECK_MODEL=${VLLM_CHECK_MODEL:-meta-llama/Llama-3.1-8B-Instruct}
-    if python scripts/check_vllm_runtime.py --model "$VLLM_CHECK_MODEL" \
+    if python check_vllm_runtime.py --model "$VLLM_CHECK_MODEL" \
             --max-model-len 2048 --gpu-memory-utilization 0.85 --enforce-eager \
             > version-vllm-check.log 2>&1; then
         echo "* vllm generate : [OK]  real LLM.generate succeeded (see version-vllm-check.log)"
