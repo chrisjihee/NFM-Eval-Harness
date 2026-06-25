@@ -45,14 +45,23 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 - Phase 0.5(attribution probe): `GSMA/leaderboard`에는 variant/extraction 컬럼이 없어
   public `gemma3-4b` variant pin 불가 → 재현 주장은 bounded 유지, `*_mcgen`는 비-default 동결.
 
+완료(Phase 3, GPU 불필요):
+- 비-default `open_telco_{teleqna,oranbench,srsranbench}_mcgen` + group 추가
+  (leak-guard pytest 통과, default scoring 동결, append-only).
+
+완료(Phase 4, GPU — 비-critical 자동 실행, ot-lite full):
+- **MC 격차의 지배적 원인 = scoring 방식**: mcgen(generation MC)이 public에 거의 일치,
+  gemma·Qwen 2개 모델에서 재현(상세 `EXPERIMENTS.md` 2026-06-26).
+- **생성형 저점수는 truncation 아님**: `MAX_LENGTH` 2048→8192로 truncation 0건이어도 점수 불변.
+- `hf`↔`vllm` parity OK. 비교 모델 `Qwen/Qwen2.5-7B-Instruct` baseline 확보.
+- 산출물: `outputs/gemma3-4b-leaderboard-delta.md`, `results/otlite-*-{2,maxlen8192,vllm-3}`, `results/otlite-qwen2.5-7b-hf-1`.
+
 ## 다음 작업
 
-- Phase 3: 객관식 MC의 generation-based 변형 `open_telco_*_mcgen`를 **비-default 실험 task**로 추가
-  (leak-guard 적용, default scoring 동결), 생성형 truncation/parser 개선 + pytest.
-- Phase 4(GPU, 단계 승인): Gemma3-4B ot-lite/ot-full 재실행, `hf`↔`vllm` parity,
-  `Qwen/Qwen2.5-7B-Instruct` baseline, 수정 before/after 측정.
-- generation-heavy task의 left-truncation(2902→2024 tokens) 완화 효과 측정.
-- TeleTables 원본 표 데이터(`TELETABLES_ROOT`) 확보 시도.
+- **[critical 게이트]** `open_telco_otfull` 최초 full run (사용자 승인 후) — public leaderboard와 같은 split.
+- generation-budget 실험(`max_gen_toks`↑ + `until` 완화)로 telemath/3gpp 저점수 원인 확정.
+- TeleTables 원본 표 데이터(`TELETABLES_ROOT`) 확보 시도 후 teletables 재측정.
+- (선택) `*_mcgen` 공식 추출 방식 확인 시 default 승격 재검토(별도 승인).
 
 ## Handoff Notes
 

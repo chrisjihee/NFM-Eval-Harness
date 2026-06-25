@@ -1,21 +1,34 @@
 # Latest Result Summary
 
-마지막 갱신: 2026-05-20
+마지막 갱신: 2026-06-26
 
-## 현재 Baseline
+## 이번 pass 핵심 결과 (원인 격리)
 
-- Run ID: `otlite-gemma3-4b-hf-main`
-- 날짜: 2026-05-15
-- 모델: `google/gemma-3-4b-it`
-- Backend: `hf`
-- Task group: `open_telco_otlite`
-- 점수: `acc=0.3718`
-- 결과 파일:
-  `results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.md`
+1. **MC 격차의 지배적 원인 = scoring 방식.** 객관식을 generation 후 답 추출(`*_mcgen`, 비-default 실험)로
+   바꾸면 점수가 public에 거의 일치 — gemma·Qwen **두 모델에서 재현**.
+   - gemma: teleqna 0.451→**0.658**(pub 0.652), oranbench 0.373→**0.667**(pub 0.660), srsranbench 0.520→**0.780**(pub 0.740)
+   - qwen: teleqna 0.532→**0.720**(pub 0.702), oranbench 0.380→**0.720**(pub 0.698), srsranbench 0.420→**0.820**(pub 0.777)
+   - 공식 방식은 UNKNOWN이므로 `*_mcgen`는 **비-default 유지**(default scoring 동결, "공식 정렬" 주장 아님, scoring sensitivity 분석).
+2. **생성형 저점수는 truncation 때문이 아님.** `MAX_LENGTH` 2048→8192로 truncation 0건이어도 점수 불변
+   (telemath 0.01, 3gpp 0.06). 다음 가설: `max_gen_toks=48` + `until:["\n"]`가 CoT를 절단 → 다음 실험 권고.
+3. **hf ↔ vllm parity OK** (MC |Δ|≤0.02).
+4. **집계방식 정정**: local group acc는 sample-weighted, public는 unweighted. gemma 동일기준 0.255 vs 0.397 = −0.142.
 
-## 해석
+## 현재 Baseline (재현, 2026-06-26)
 
-- 현재 가장 강한 영역은 `srsranbench`와 `teleqna`입니다.
-- 가장 약한 영역은 `telemath`, `3gpp_tsg_gen`, `telelogs`입니다.
-- Prompt truncation warning이 관찰되었으므로, generation-heavy 점수를 안정적인
-  model-only 측정값으로 보기 전에 원인을 조사해야 합니다.
+- 모델: `google/gemma-3-4b-it` | Backend: `hf` | Task group: `open_telco_otlite` (full)
+- default group acc(sample-weighted): `0.370` / 7-task 단순평균: `0.255`
+- `open_telco_otlite_mcgen`(비-default) group acc: `0.673`
+- 결과: `results/otlite-gemma3-4b-hf-2/google__gemma-3-4b-it/`
+- leaderboard 비교: `outputs/gemma3-4b-leaderboard-delta.md`
+
+## 비교 모델
+
+- `Qwen/Qwen2.5-7B-Instruct` | `hf` | `open_telco_otlite`: default group `0.423`(uw 0.286), mcgen group `0.732`
+- 결과: `results/otlite-qwen2.5-7b-hf-1/`
+
+## 미실행 / 다음 단계
+
+- `open_telco_otfull` 최초 full run (critical 게이트 — 사용자 승인 후).
+- generation-budget 실험(`max_gen_toks`↑ + `until` 완화)로 telemath/3gpp 저점수 원인 확정.
+- TeleTables 원본 표(`TELETABLES_ROOT`) 확보 시 teletables 재측정.
