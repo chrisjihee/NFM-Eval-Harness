@@ -38,15 +38,21 @@ dependencies = [
     "pydantic",
     "matplotlib",
     "scikit-learn",
-
-    "openai",
-    "together",
-    "jupyter",
     "ipywidgets",
+    "jupyter",
+    "together",
+    "openai",
 
     "pypdf",
     "pymupdf",
     "python-pptx",
+    "python-docx",
+    "mammoth",
+    "svgwrite",
+    "graphviz",
+    "pydot",
+    "plotly",
+    "kaleido",
 ]
 
 [build-system]
