@@ -22,6 +22,19 @@ DATA_PARALLEL_SIZE="${DATA_PARALLEL_SIZE:-1}"
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.7}"
 MAX_MODEL_LEN="${MAX_MODEL_LEN:-}"
 VLLM_VISIBLE_DEVICES="${VLLM_VISIBLE_DEVICES:-${CUDA_VISIBLE_DEVICES:-}}"
+LIMIT="${LIMIT:-}"
+CONFIRM_FULL_RUN="${CONFIRM_FULL_RUN:-0}"
+
+# GPU safety guard: refuse to launch an unbounded full GPU run unless explicitly
+# confirmed. Set LIMIT=N for a bounded run, or CONFIRM_FULL_RUN=1 to allow a
+# full run.
+LIMIT_ARGS=()
+if [[ -n "${LIMIT}" ]]; then
+  LIMIT_ARGS=(--limit "${LIMIT}")
+elif [[ "${CONFIRM_FULL_RUN}" != "1" ]]; then
+  echo "full GPU run requires CONFIRM_FULL_RUN=1 (or set LIMIT=N for a bounded run)" >&2
+  exit 2
+fi
 
 case "${BACKEND}" in
   hf)
@@ -33,6 +46,7 @@ case "${BACKEND}" in
       --device "${DEVICE}" \
       --batch_size "${BATCH_SIZE}" \
       --apply_chat_template \
+      ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} \
       --output_path "${OUTPUT_PATH}"
     ;;
   vllm)
@@ -52,6 +66,7 @@ case "${BACKEND}" in
       --tasks "${TASKS}" \
       --batch_size "${BATCH_SIZE}" \
       --apply_chat_template \
+      ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} \
       --output_path "${OUTPUT_PATH}"
     ;;
   *)
