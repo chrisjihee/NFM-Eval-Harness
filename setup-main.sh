@@ -97,8 +97,14 @@ EOF
     echo -e "========================================"
 echo "[$(date +'%Y-%m-%d %H:%M:%S')] vllm runtime libraries configured (Elapsed: $((SECONDS - t0))s)"
 
-echo -e "\nChecking runtime imports for essential packages..."
-python - <<'PY'
+
+# 6. Check the installed packages and their versions
+t0=$SECONDS; echo -e "\n[$(date +'%Y-%m-%d %H:%M:%S')] Checking installed packages and versions..."
+source "${VENV_DIR}/bin/activate"
+uv pip list > version-dep.txt
+uv pip list | grep -E "torch|trl|transformer|accelerate|llm|deepspeed|attn|peft|bitsandbytes|huggingface|datasets|pandas|numpy|chris|prog"
+
+echo -e "\nChecking runtime imports for essential packages..."python - <<'PY'
 import torch, torchaudio, torchvision
 print("* torch         :", torch.__version__, " (cuda version:", torch.version.cuda, ")")
 print("* torchaudio    :", torchaudio.__version__)

@@ -177,6 +177,7 @@ package-src
 lm-evaluation-harness
 
 # output
+version-vllm-check.log
 outputs/*
 !outputs/
 !outputs/latest-summary.md
