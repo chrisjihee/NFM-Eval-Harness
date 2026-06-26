@@ -182,4 +182,12 @@ outputs/*
 !outputs/
 !outputs/latest-summary.md
 !outputs/run-index.jsonl
+!outputs/*-leaderboard-delta.md
 outputs-*/
+
+# eval results: keep curated baseline evidence (results_*.json + results_*.md) tracked,
+# but never commit large per-sample dumps or raw logs.
+results/**/*_samples_*.jsonl
+results/**/samples_*.jsonl
+results/**/*.log
+results/**/*.tmp

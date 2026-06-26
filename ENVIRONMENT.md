@@ -36,6 +36,28 @@ Run from repository root:
 
 `setup-main.sh` creates `.venv`, installs project dependencies, configures vLLM runtime libraries, and writes package versions to `version-dep.txt`.
 
+## LM-Evaluation-Harness pin
+
+The vendored clone `lm-evaluation-harness/` is pinned to:
+
+```text
+sha 97a5e2c7  (git describe: v0.4.12-12-g97a5e2c7)
+```
+
+Install it editable, without dependencies, so the hard-pinned torch / vllm / transformers
+versions in `pyproject.toml` are not overwritten:
+
+```bash
+uv pip install -e ./lm-evaluation-harness --no-deps
+```
+
+Note: the current `.venv` may not have `lm_eval` installed (verified absent during this
+documentation pass). Install it before any run:
+
+```bash
+.venv/bin/python -c "import lm_eval" || uv pip install -e ./lm-evaluation-harness --no-deps
+```
+
 ## Important dependency notes
 
 `pyproject.toml` currently pins a modern and heavy stack, including:
@@ -72,41 +94,43 @@ or ensure the environment has appropriate `HF_TOKEN` access.
 
 ## Basic run commands
 
+These are full GPU runs, so each carries the explicit `CONFIRM_FULL_RUN=1` guard. For a
+quick check, use `LIMIT=5` instead of `CONFIRM_FULL_RUN=1` (see "Recommended smoke tests").
+
 `ot-lite` with HF backend:
 
 ```bash
-MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
 `ot-full` with HF backend:
 
 ```bash
-MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
+CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
 ```
 
 `ot-lite` with vLLM backend:
 
 ```bash
-BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+CONFIRM_FULL_RUN=1 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
 ## Recommended smoke tests
 
-Start with a single task and small limit before full runs:
+Always start with a bounded smoke before any full run. The runner enforces a bound via the
+`LIMIT` guard, so a copy-paste cannot accidentally launch a full GPU run:
 
 ```bash
-lm_eval \
-  --model hf \
-  --model_args pretrained=google/gemma-3-4b-it \
-  --include_path ./open_telco_lm_eval/tasks \
-  --tasks open_telco_teleqna \
-  --limit 5 \
-  --device cuda:0 \
-  --batch_size auto \
-  --apply_chat_template
+LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
-Then test one generation-heavy task:
+A full run requires an explicit confirmation flag:
+
+```bash
+CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+```
+
+If you must invoke `lm_eval` directly for a single task, always pass `--limit`:
 
 ```bash
 lm_eval \

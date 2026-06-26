@@ -89,11 +89,46 @@ Local task scores:
 | `open_telco_3gpp_tsg_gen` | 0.0700 | `three_gpp` |
 | `open_telco_otlite` | 0.3718 | `average` |
 
+## Aggregation method (read this before comparing averages)
+
+The earlier "about 2.5 percentage points" statement was an aggregation-method mismatch,
+not a like-for-like comparison. The two "averages" are computed differently:
+
+- Local group `acc = 0.3718` (`open_telco_otlite`) is **sample-weighted**. The group YAML
+  does not override `weight_by_size`, so the lm_eval fork default `weight_by_size=True`
+  applies, and the high-sample-count `teleqna` task (1000 samples) dominates the group score.
+- The public leaderboard `average = 0.397` is an **unweighted task mean** (equal weight per
+  benchmark column).
+- The local **unweighted 7-task simple mean** of the same task scores is **0.259**.
+
+Comparing on the same basis (local unweighted task mean `0.259` vs public unweighted task
+mean `0.397`) gives a real gap of about **−13.8 percentage points** — far larger than the
+earlier "−2.5 pp" figure, which compared a sample-weighted number against an unweighted one.
+
+This −13.8 pp figure is a candidate gap, not a settled conclusion: it still mixes `ot-lite`
+(local) against the public leaderboard and carries the attribution caveats below.
+
+The largest task-level drops are the three multiple-choice tasks:
+`oranbench` (−0.293), `teleqna` (−0.202), and `srsranbench` (−0.193). `telelogs` is the only
+task where local is higher (+0.053).
+
+### Attribution caveat (UNKNOWN inputs)
+
+Two inputs needed to attribute the gap are currently UNKNOWN, so the cause is undetermined:
+
+- the exact extraction/scoring method behind the official GSMA leaderboard numbers; and
+- which `gemma3-4b` variant (instruct / base / API-served / specific revision) produced the
+  public row.
+
+Until both are known, treat the gap as observed, not explained.
+
 ## Initial interpretation
 
-The local average `0.3718` is about 2.52 percentage points lower than the public average `0.3970`.
+The local sample-weighted group `acc 0.3718` and the public unweighted task mean `0.397`
+are not directly comparable (see "Aggregation method" above). On a like-for-like
+unweighted-task-mean basis the local value is `0.259`, a candidate gap of about −13.8 pp.
 
-That average gap is not huge. However, task-level gaps are large and need diagnosis.
+Task-level gaps are large and need diagnosis.
 
 Approximate local-vs-public deltas:
 
@@ -106,7 +141,18 @@ Approximate local-vs-public deltas:
 | `telemath` | 0.0100 | 0.136667 | -0.126667 |
 | `telelogs` | 0.1700 | 0.116667 | +0.053333 |
 | `three_gpp` | 0.0700 | 0.200000 | -0.130000 |
-| average | 0.3718 | 0.397000 | -0.025200 |
+
+Average comparison (note the two methods are not interchangeable):
+
+| Metric | Local | Public | Delta |
+|---|---:|---:|---:|
+| sample-weighted group `acc` (local) | 0.3718 | — | — |
+| unweighted 7-task mean | 0.259 | 0.397000 | -0.138 |
+
+The `0.3718` group score is sample-weighted and must not be subtracted from the public
+unweighted `0.397`; the earlier `-0.0252` "average delta" came from doing exactly that. The
+defensible same-basis delta is the unweighted-task-mean row: about **−13.8 pp** (candidate,
+not settled).
 
 The discrepancy pattern suggests that the local and public evaluations are not aligned at the task/sample/prompt/scoring level.
 
@@ -188,11 +234,24 @@ This must be investigated because it can destroy long-context inputs, especially
 
 `TELETABLES_ROOT` can inject original table files. Without it, public rows may have insufficient table content for faithful reproduction.
 
+## Result tracking policy
+
+Curated `results_*.json` + `results_*.md` files are intentionally git-tracked as baseline
+evidence. Large per-sample dumps and raw logs (`*_samples_*.jsonl`, `samples_*.jsonl`,
+`*.log`, `*.tmp` under `results/**`) are excluded via `.gitignore`.
+
 ## Recommended reproduction procedure
 
-### Step 1. Confirm task loading
+### Step 1. Confirm task loading (bounded smoke)
 
-Run small-limit tests first.
+Run a bounded smoke first so a copy-paste never triggers a full GPU run. The runner
+enforces this via the `LIMIT` guard:
+
+```bash
+LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+```
+
+If you must call `lm_eval` directly, always pass `--limit`:
 
 ```bash
 lm_eval \
@@ -206,16 +265,18 @@ lm_eval \
   --apply_chat_template
 ```
 
-### Step 2. Re-run `ot-lite`
+### Step 2. Re-run `ot-lite` (full run, explicit confirm)
+
+A full run requires an explicit confirmation flag:
 
 ```bash
-MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
-### Step 3. Run `ot-full`
+### Step 3. Run `ot-full` (full run, explicit confirm)
 
 ```bash
-MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
+CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
 ```
 
 This is the more relevant comparison target for public leaderboard alignment.

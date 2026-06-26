@@ -21,18 +21,40 @@ TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
 DATA_PARALLEL_SIZE="${DATA_PARALLEL_SIZE:-1}"
 GPU_MEMORY_UTILIZATION="${GPU_MEMORY_UTILIZATION:-0.7}"
 MAX_MODEL_LEN="${MAX_MODEL_LEN:-}"
+# Opt-in hf-backend context cap; unset by default (no behavior change). vllm
+# uses MAX_MODEL_LEN above.
+MAX_LENGTH="${MAX_LENGTH:-}"
 VLLM_VISIBLE_DEVICES="${VLLM_VISIBLE_DEVICES:-${CUDA_VISIBLE_DEVICES:-}}"
+LIMIT="${LIMIT:-}"
+CONFIRM_FULL_RUN="${CONFIRM_FULL_RUN:-0}"
+
+# GPU safety guard: refuse to launch an unbounded full GPU run unless explicitly
+# confirmed. Set LIMIT=N for a bounded run, or CONFIRM_FULL_RUN=1 to allow a
+# full run.
+LIMIT_ARGS=()
+if [[ -n "${LIMIT}" ]]; then
+  LIMIT_ARGS=(--limit "${LIMIT}")
+elif [[ "${CONFIRM_FULL_RUN}" != "1" ]]; then
+  echo "full GPU run requires CONFIRM_FULL_RUN=1 (or set LIMIT=N for a bounded run)" >&2
+  exit 2
+fi
 
 case "${BACKEND}" in
   hf)
+    HF_MODEL_ARGS="pretrained=${MODEL_NAME}"
+    if [[ -n "${MAX_LENGTH}" ]]; then
+      HF_MODEL_ARGS="${HF_MODEL_ARGS},max_length=${MAX_LENGTH}"
+    fi
+
     lm_eval \
       --model hf \
-      --model_args "pretrained=${MODEL_NAME}" \
+      --model_args "${HF_MODEL_ARGS}" \
       --include_path "${ROOT_DIR}/open_telco_lm_eval/tasks" \
       --tasks "${TASKS}" \
       --device "${DEVICE}" \
       --batch_size "${BATCH_SIZE}" \
       --apply_chat_template \
+      ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} \
       --output_path "${OUTPUT_PATH}"
     ;;
   vllm)
@@ -52,6 +74,7 @@ case "${BACKEND}" in
       --tasks "${TASKS}" \
       --batch_size "${BATCH_SIZE}" \
       --apply_chat_template \
+      ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} \
       --output_path "${OUTPUT_PATH}"
     ;;
   *)

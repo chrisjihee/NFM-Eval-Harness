@@ -26,7 +26,14 @@ Dataset: `GSMA/ot-lite`
 
 Purpose: quick 7-task leaderboard-style baseline.
 
-Aggregation: unweighted mean of the 7 task `acc` values.
+Group `metadata.version`: v0.2.
+
+Aggregation: **sample-weighted** mean of the 7 task `acc` values. The group YAML
+(`open_telco_otlite.yaml`) declares `aggregate_metric_list` with `aggregation: mean`
+but does not override `weight_by_size`, so the lm_eval fork default
+(`weight_by_size=True`) applies. This means the group `acc` is dominated by the
+high-sample-count tasks (notably `teleqna`, 1000 samples). The unweighted task-mean
+must be computed separately if equal per-task weighting is wanted.
 
 Tasks:
 
@@ -46,6 +53,10 @@ Dataset: `GSMA/ot-lite`
 
 Purpose: legacy starter bundle from the first implementation pass.
 
+Group `metadata.version`: v0.1.
+
+Aggregation: **sample-weighted** mean (`weight_by_size: true`, explicit in the group YAML).
+
 Tasks:
 
 ```text
@@ -61,7 +72,11 @@ Dataset: `GSMA/ot-full`
 
 Purpose: 7-task leaderboard-oriented baseline.
 
-Aggregation: unweighted mean of the 7 task `acc` values.
+Group `metadata.version`: v0.2.
+
+Aggregation: **sample-weighted** mean of the 7 task `acc` values. As with
+`open_telco_otlite`, the group YAML (`open_telco_otfull.yaml`) does not override
+`weight_by_size`, so the lm_eval fork default (`weight_by_size=True`) applies.
 
 Tasks:
 
@@ -74,6 +89,36 @@ open_telco_full_telemath
 open_telco_full_telelogs
 open_telco_full_3gpp_tsg
 ```
+
+## Per-task `metadata.version`
+
+The per-task YAML `metadata.version` values have drifted; they are not uniformly
+"v0.2". Current values:
+
+| Task | `metadata.version` |
+|---|---|
+| `open_telco_teleqna` | v0.1 |
+| `open_telco_oranbench` | v0.1 |
+| `open_telco_srsranbench` | v0.1 |
+| `open_telco_3gpp_tsg` (MC) | v0.1 |
+| `open_telco_otlite_core4` (group) | v0.1 |
+| `open_telco_telemath` | v0.2 |
+| `open_telco_telelogs` | v0.2 |
+| `open_telco_teletables` | v0.2 |
+| `open_telco_3gpp_tsg_gen` | v0.2 |
+| `open_telco_otlite` (group) | v0.2 |
+
+All `open_telco_full_*` tasks and the `open_telco_otfull` group are v0.2.
+
+## Generation settings (`max_gen_toks`)
+
+Actual `generation_kwargs.max_gen_toks` values from the task YAML:
+
+| Task | `max_gen_toks` |
+|---|---|
+| `open_telco_telemath` / `open_telco_full_telemath` | 48 |
+| `open_telco_telelogs` / `open_telco_full_telelogs` | 24 |
+| `open_telco_3gpp_tsg_gen` / `open_telco_full_3gpp_tsg` | 32 |
 
 ## Task details
 
@@ -136,7 +181,7 @@ open_telco_full_3gpp_tsg
 | Metric | `acc` |
 | Prompt helper | `utils.doc_to_text_telemath` |
 | Parser | `utils.process_results_telemath` |
-| Current generation settings | deterministic, limited `max_gen_toks`; exact values in YAML |
+| Current generation settings | deterministic, `max_gen_toks: 48` (per YAML) |
 | Main risk | parser strictness, premature newline stop, units, rounding/tolerance, chain-of-thought vs final-answer formatting |
 
 ### TeleLogs
@@ -166,6 +211,12 @@ open_telco_full_3gpp_tsg
 | Parser | `utils.process_results_3gpp_generate` for generation variant |
 | Expected labels | `CT1`, `CT3`, `CT4`, `CT6`, `RAN1`, `RAN2`, `RAN3`, `RAN4`, `RAN5`, `RAN_AH1`, `SA1`, `SA2`, `SA3`, `SA4`, `SA5`, `SA6` |
 | Main risk | public stack may classify from a different excerpt/prompt format; generation JSON parser may be too strict or stop too early |
+
+## Scripts
+
+- `scripts/compare_gsma_leaderboard.py`: leaderboard comparison helper. Added in this
+  documentation pass (now part of the repo). Compares a local result JSON against a
+  public `GSMA/leaderboard` row.
 
 ## Known global issues
 
