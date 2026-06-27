@@ -31,6 +31,7 @@
 | 2026-06-27 | `otlite-gsma-qwen3-4b-vllm` | `Qwen/Qwen3-4B` | `vllm` | `open_telco_otlite_gsma` | `0.4463` (unweighted) | **delivery 내부.** `enable_thinking=False`, 응답 `<think>` 0/1700. |
 | 2026-06-27 | `otlite-gsma-qwen3-14b-vllm` | `Qwen/Qwen3-14B` | `vllm`(tp=2) | `open_telco_otlite_gsma` | `0.4678` (unweighted) | **delivery 내부.** think-OFF 0/1700. telelogs 0.0=`\boxed{}` 미출력(emission 0.01). |
 | 2026-06-27 | `otlite-gsma-deepseek-r1-distill-14b-vllm` | `deepseek-ai/DeepSeek-R1-Distill-Qwen-14B` | `vllm`(tp=2) | `open_telco_otlite_gsma` | `0.0514` (unweighted) ⚠ | **delivery 내부.** MC 붕괴=artifact: reasoning 모델이 `enable_thinking=False` 무시→MC max_gen_toks:8에 추론 산문 truncate. 능력치 아님. |
+| 2026-06-27~28 | `PASS5 확장(ot-lite 11 + ot-full 14)` | 다수(8B~32B, LB+non-LB) | `vllm`(±tp=2) | `open_telco_{otlite,otfull}_gsma` | LB 전부 public 재현 | **PASS5 확장 검증.** ot-lite 신규 11(LB 8 Δ−0.048~+0.052). **ot-full full split 14: LB 11 전부 재현(비-gemma3 9종 ±0.021; gemma3 −0.037/−0.047 생성형 emission)**. 환경(VM) 이슈 레시피·tp=2·제외 artifact 상세는 `outputs/overnight-otfull-results.md`/`outputs/model-candidate-plan-extended.md`. run-index에 25 엔트리. |
 
 ## 2026-05-15: Gemma 3 4B IT On ot-lite
 
