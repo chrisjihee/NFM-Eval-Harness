@@ -21,7 +21,7 @@
 | 2026-06-26 | `otlite-gemma3-4b-hf-maxlen8192` | `google/gemma-3-4b-it` | `hf` | `open_telco_otlite` | `0.366 acc` | `MAX_LENGTH=8192`. truncation 0건이나 generation 점수 불변(=truncation 원인 아님). |
 | 2026-06-26 | `otlite-gemma3-4b-vllm-3` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otlite` | `0.365 acc` | hf와 parity(노이즈 내). |
 | 2026-06-26 | `otlite-qwen2.5-7b-hf-1` | `Qwen/Qwen2.5-7B-Instruct` | `hf` | `open_telco_otlite`(+`_mcgen`) | `0.423 acc` (uw 0.286) | 비교 모델. mcgen group=`0.732`. |
-| 2026-06-26 | `otfull-gemma3-4b-vllm-1` | `google/gemma-3-4b-it` | `vllm`(tp=2) | `open_telco_otfull`(+`_mcgen`) | `0.354 acc` (uw 0.251) | **public와 동일 split**. mcgen group=`0.648`. teletables degraded. |
+| 2026-06-26 | `otfull-gemma3-4b-vllm-1` | `google/gemma-3-4b-it` | `vllm`(tp=2) | `open_telco_otfull`(+`_mcgen`) | `0.354 acc` (uw 0.251) | **public와 동일 split**. mcgen group=`0.648`. teletables(default column) degraded; `_mcgen`/`_gsma`는 question-only=GSMA parity. |
 | 2026-06-27 | `otlite-gsma-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otlite_gsma` | `0.3992 acc` (unweighted) | **GSMA-aligned scorer. unweighted ≈ public 0.397 (+0.002).** |
 | 2026-06-27 | `telelogs-gsma-hinted-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_telelogs_gsma_hinted` | `0.13 acc` | telelogs raw collapse(0.090) → format-hint 회복 ≈ public 0.117. |
 | 2026-06-27 | `otfull-gsma-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otfull_gsma` | `0.3926 acc` (unweighted) | **public 동일 split·대규모 N에서 ≈ public 0.397 (−0.004).** telelogs faithful 0.118≈0.117. |
@@ -120,7 +120,7 @@ Task별 점수:
 | group | 0.40대 | **0.6477** | — | — |
 
 - **결론(강화)**: public과 동일 split + 대규모 N(teleqna 10k)에서도 generation-based MC가 public에 근접 → 공식 GSMA가 generation 답 추출 방식이라는 가설을 강하게 지지. (여전히 공식 미확정 → `*_mcgen` 비-default 유지.)
-- teletables는 표 데이터 부재로 degraded(−0.061), generation(telemath/3gpp)은 ot-lite와 동일하게 낮음(scoring 아닌 generation budget/parser 이슈). telelogs는 public과 동률.
+- teletables(default loglikelihood column)는 표주입 경로 미설정으로 −0.061; **단 `_mcgen`/`_gsma` teletables는 question-only=GSMA parity(공식도 표 미주입) — degraded 아님**. generation(telemath/3gpp)은 ot-lite와 동일하게 낮음(scoring 아닌 generation budget/parser 이슈). telelogs는 public과 동률.
 - 실행 메모: vLLM tp=2 종료 시 NCCL/c10 teardown 경고가 로그에 남으나 평가 결과(JSON, full n-samples)는 정상 생성됨.
 
 ## 2026-06-27: GSMA-aligned profile (open_telco_*_gsma, gemma-3-4b-it, vLLM)

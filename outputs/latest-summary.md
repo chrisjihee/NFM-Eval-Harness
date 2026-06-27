@@ -49,7 +49,7 @@ scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco
 - 모델: `google/gemma-3-4b-it` | Backend: `vllm`(tp=2) | 16,866 docs
 - default unweighted **0.251** vs public **0.397** (delta −0.146); group(sample-weighted) 0.354
 - **mcgen near-reproduction (대규모 N)**: teleqna 0.422→**0.630**(pub 0.652, N=10k), oranbench 0.353→**0.635**(pub 0.660), srsranbench 0.551→**0.777**(pub 0.740)
-- teletables degraded(표 데이터 부재), generation(telemath/3gpp) 여전히 낮음(별도 원인)
+- teletables(default column) 낮음(표주입 경로 미설정); **`_gsma`/`_mcgen` teletables는 question-only=GSMA parity**. generation(telemath/3gpp) 여전히 낮음(별도 원인)
 - 결과: `results/otfull-gemma3-4b-vllm-1/` · 비교: `outputs/gemma3-4b-otfull-leaderboard-delta.md`
 
 ## 미실행 / 다음 단계
