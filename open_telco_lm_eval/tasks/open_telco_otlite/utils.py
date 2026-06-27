@@ -440,3 +440,148 @@ def process_results_mc_gen(
     if prediction is None:
         return {"acc": 0.0}
     return {"acc": 1.0 if prediction == gold else 0.0}
+
+
+# ---------------------------------------------------------------------------
+# GSMA-aligned generation scoring (scorer rules mirror gsma-evals source).
+# Additive; default multiple_choice/generate paths unchanged. Prompts read only
+# doc[question]/doc[choices]; gold (doc[answer]) used ONLY as scoring target,
+# never injected. New functions AND new module constants are re-exported to
+# ot-full via importlib (affects both tracks).
+# ---------------------------------------------------------------------------
+
+from textwrap import dedent as _dedent
+
+# parse_boxed_answer (telemath/telelogs) mirror: capture last \boxed{...} content,
+# allowing one level of nested braces. Matches gsma-evals BOXED_PATTERN.
+BOXED_NESTED_RE = re.compile(r"\\boxed\{((?:[^{}]|\{[^{}]*\})*)\}")
+# three_gpp WG_PATTERN mirror: working-group token capture.
+WG_GSMA_RE = re.compile(r"([A-Z]+\d+(?:-[A-Z]+)?)")
+# gsma-evals WHITESPACE_PATTERN mirror: collapse newline + following whitespace.
+WS_COLLAPSE_RE = re.compile(r"\n\s*")
+# telelogs DIGIT_PATTERN mirror: first run of digits.
+DIGIT_GSMA_RE = re.compile(r"\d+")
+
+# Verbatim copy of gsma-evals telemath SYSTEM_PROMPT (telemath.py); built with
+# dedent(...).strip() exactly as upstream so the resulting text is byte-identical.
+TELEMATH_SYSTEM_PROMPT_GSMA = _dedent(r"""
+    You are an expert problem solver. Your task is to solve numerical exercises by following these guidelines:
+    1.  **Understand the Goal:** Clearly identify what the problem is asking you to find, paying close attention to the required units for the final answer.
+    2.  **Reason Step-by-Step:** Provide a clear, sequential reasoning process. Explain the formulas, principles, or logic used in each step. Show intermediate calculations if they clarify your thought process. The detailed structure of your sub-steps is up to you, as long as the reasoning is sound and easy to follow.
+    3.  **Unit Management:**
+        *   Track units throughout your calculations.
+        *   **Crucially, ensure your final numerical answer is converted to the specific units requested in the problem statement.** If intermediate calculations result in a different unit, perform a final conversion step.
+        *   State the unit of the final answer clearly in your explanatory text *before* the boxed answer.
+    4.  **Final Numerical Answer Format:**
+        *   The final answer must be a single numerical value (integer or float).
+        *   Present this numerical value exclusively within the `\$\boxed{{...}}\$` format.
+        *   **CRITICAL:** The `\$\boxed{{...}}\$` block must contain *only* the number. No text, no units, no labels (e.g., NOT `\$\boxed{{Result: 50}}\$` or `\$\boxed{{50 \text{{ mA}}}}\$`, but `\$\boxed{{50}}\$`).
+    """).strip()
+
+
+def extract_boxed_last(text: str) -> str:
+    r"""Return last ``\boxed{...}`` content, normalized like gsma parse_boxed_answer.
+
+    Mirrors gsma-evals ``parse_boxed_answer``: empty/None -> ""; take the last
+    match of :data:`BOXED_NESTED_RE`, ``.strip()`` it, collapse newline-leading
+    whitespace via :data:`WS_COLLAPSE_RE`, then ``lstrip(":")`` and ``rstrip("./")``.
+    """
+    if not text:
+        return ""
+    matches = BOXED_NESTED_RE.findall(text)
+    if not matches:
+        return ""
+    answer = WS_COLLAPSE_RE.sub("", matches[-1].strip())
+    return answer.lstrip(":").rstrip("./")
+
+
+def doc_to_text_telemath_gsma(doc: dict[str, Any]) -> str:
+    """telemath prompt: gsma SYSTEM_PROMPT header + blank line + raw question.
+
+    lm-eval has no system-solver stage, so the upstream ``system_message`` is
+    merged into a single prompt. Reads only ``doc["question"]``; gold untouched.
+    """
+    return f"{TELEMATH_SYSTEM_PROMPT_GSMA}\n\n{doc['question']}"
+
+
+def process_results_telemath_gsma(
+    doc: dict[str, Any], results: list[str]
+) -> dict[str, float]:
+    """Score telemath generation per gsma telemath_scorer.
+
+    pred = last boxed content; target = str(answer). Correct if
+    ``math.isclose(float(pred), float(target), rel_tol=0.01, abs_tol=0.01)``;
+    on ValueError/TypeError fall back to exact string equality.
+    """
+    pred = extract_boxed_last(results[0] if results else "")
+    target = str(doc["answer"]).strip()
+    try:
+        ok = math.isclose(float(pred), float(target), rel_tol=0.01, abs_tol=0.01)
+    except (ValueError, TypeError):
+        ok = pred == target
+    return {"acc": 1.0 if ok else 0.0}
+
+
+def doc_to_text_telelogs_gsma(doc: dict[str, Any]) -> str:
+    """telelogs prompt: raw question only, no instructions (gsma uses bare generate())."""
+    return str(doc["question"]).strip()
+
+
+def extract_first_int(text: str) -> int | None:
+    """First run of digits in ``text`` as int, else None (gsma extract_first_int)."""
+    match = DIGIT_GSMA_RE.search(text)
+    if match:
+        return int(match.group())
+    return None
+
+
+def process_results_telelogs_gsma(
+    doc: dict[str, Any], results: list[str]
+) -> dict[str, float]:
+    """Score telelogs generation per gsma soft scorer.
+
+    pred = first int of last boxed content; gt = first int of str(answer);
+    correct iff both present and equal.
+    """
+    pred = extract_first_int(extract_boxed_last(results[0] if results else ""))
+    gt = extract_first_int(str(doc["answer"]))
+    return {"acc": 1.0 if (pred is not None and pred == gt) else 0.0}
+
+
+def doc_to_text_3gpp_gsma(doc: dict[str, Any]) -> str:
+    """3gpp prompt: raw question only, no JSON/template (gsma uses bare generate())."""
+    return str(doc["question"]).strip()
+
+
+def extract_wg_token(text: str, last: bool = False) -> str | None:
+    """Working-group token via gsma WG_PATTERN, case-insensitive.
+
+    Uses ``findall`` (group capture) over :data:`WG_GSMA_RE`. Default ``last=False``
+    returns the first match (gsma ``pattern`` scorer uses the first match);
+    ``last=True`` returns the last match. None if no match.
+    """
+    matches = re.findall(WG_GSMA_RE.pattern, text, flags=re.IGNORECASE)
+    if not matches:
+        return None
+    return matches[-1] if last else matches[0]
+
+
+def process_results_3gpp_gsma(
+    doc: dict[str, Any], results: list[str]
+) -> dict[str, float]:
+    """Score 3gpp generation per gsma pattern scorer (case-insensitive, first match)."""
+    pred = extract_wg_token(results[0] if results else "")
+    ans = str(doc["answer"]).strip()
+    return {"acc": 1.0 if (pred is not None and pred.lower() == ans.lower()) else 0.0}
+
+
+def doc_to_text_telelogs_gsma_hinted(doc: dict[str, Any]) -> str:
+    """telelogs raw question + one output-format line (collapse-gate fallback; gold-free)."""
+    question = str(doc["question"]).strip()
+    return f"{question}\n\nPut your final root-cause label in \\boxed{{}}."
+
+
+def doc_to_text_3gpp_gsma_hinted(doc: dict[str, Any]) -> str:
+    """3gpp raw question + one output-format line (collapse-gate fallback; gold-free)."""
+    question = str(doc["question"]).strip()
+    return f"{question}\n\nEnd with the working group label, e.g. SA5."

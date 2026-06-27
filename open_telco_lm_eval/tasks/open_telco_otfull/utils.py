@@ -14,6 +14,7 @@ if _SPEC is None or _SPEC.loader is None:
 _MODULE = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_MODULE)
 
+# Wildcard re-exports ALL non-underscore symbols (funcs + constants) from ot-lite utils; new *_gsma symbols are added in ot-lite only and surface here automatically.
 for _name in dir(_MODULE):
     if _name.startswith("_"):
         continue
