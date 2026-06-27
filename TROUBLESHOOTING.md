@@ -1,6 +1,13 @@
 # Troubleshooting notes
 
-Last updated: 2026-06-25
+Last updated: 2026-06-27
+
+> **Task name 정책 (rename).** 권장/기본 GSMA-compatible 그룹은
+> `open_telco_otlite_gsma` / `open_telco_otfull_gsma`입니다(run 스크립트 기본값,
+> `TASKS` 생략 시 실행). legacy lm-eval baseline은
+> `open_telco_{otlite,otfull}_lm_eval_baseline`로 보존됩니다(diagnostic). bare
+> `open_telco_otlite` / `open_telco_otfull`은 **실행 불가**입니다(run 스크립트가
+> fail-fast로 거부). `*_mcgen`은 diagnostic(불변)입니다.
 
 ## 1. Public leaderboard score does not match local score
 
@@ -8,7 +15,7 @@ Expected. This repository is LM-Evaluation-Harness based, while the official GSM
 
 Check:
 
-- Are you running `ot-lite` or `ot-full`?
+- Are you running the GSMA-aligned group (`*_gsma`, default/recommended) or the legacy lm-eval baseline (`*_lm_eval_baseline`)?
 - Are you comparing against the correct public row in `GSMA/leaderboard`?
 - Is the model variant identical? Public row may say `gemma3-4b`; local may use `google/gemma-3-4b-it`.
 - Is `--apply_chat_template` enabled or disabled?
@@ -76,11 +83,15 @@ Possible causes:
 - Official stack may use different document excerpt or choices.
 - Multiple-choice variant and generation variant should be compared.
 
-Try comparing:
+Try comparing the GSMA-aligned generation scorer against the legacy MC/loglikelihood
+variant (bounded smoke shown; both are sub-tasks, so they run — only the bare
+group names `open_telco_otlite` / `open_telco_otfull` are fail-fast):
 
 ```bash
-TASKS=open_telco_3gpp_tsg MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
-TASKS=open_telco_3gpp_tsg_gen MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+# GSMA-aligned generation scorer (first-match WG regex)
+TASKS=open_telco_3gpp_tsg_gsma LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+# legacy lm-eval generation sub-task (default scoring, frozen)
+TASKS=open_telco_3gpp_tsg_gen_lm_eval_baseline LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
 ## 6. TeleTables score is low

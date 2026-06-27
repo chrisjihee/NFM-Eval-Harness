@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Compare a local lm-eval result against the public GSMA Open Telco leaderboard.
 
-This tool reads a local LM-Evaluation-Harness result JSON (e.g. an ``open_telco_otlite``
-or ``open_telco_otfull`` run), extracts the per-task primary accuracy (``acc,none``)
-and the group score, then aligns those numbers task-wise with a public row from the
-``GSMA/leaderboard`` dataset.
+This tool reads a local LM-Evaluation-Harness result JSON -- a leaderboard-comparable
+``open_telco_otlite_gsma`` / ``open_telco_otfull_gsma`` run (use ``--profile gsma``),
+or a legacy diagnostic ``*_lm_eval_baseline`` run (default profile) -- extracts the
+per-task primary accuracy (``acc,none``) and the group score, then aligns those numbers
+task-wise with a public row from the ``GSMA/leaderboard`` dataset.
 
 It DOES NOT hardcode any score. Public values are loaded from the ``datasets`` library;
 the only manual fallback is an optional public JSON file you supply yourself.
@@ -18,13 +19,15 @@ aggregate views that are NOT the same thing:
 
 Two profiles are available via ``--profile``:
 
-* ``default`` (the default) maps public columns to the frozen multiple_choice / generate
-  tasks. Output is byte-identical to prior behavior.
-* ``gsma`` (non-default) maps public columns to the additive ``*_mcgen`` / ``*_gsma``
-  tasks, emits the per-task delta table FIRST, labels the single average as a
-  leaderboard convention NOT computed by official GSMA code, and annotates the 4 MC
-  rows whose generation engine is UNALIGNED with the official constrained decoding.
-  This is a generation-vs-constrained-decoding sensitivity view, NOT a reproduction.
+* ``gsma`` (RECOMMENDED for leaderboard comparison) maps public columns to the
+  ``*_mcgen`` / ``*_gsma`` tasks (groups ``open_telco_{otlite,otfull}_gsma``), emits the
+  per-task delta table FIRST, labels the single average as a leaderboard convention NOT
+  computed by official GSMA code, and annotates the 4 MC rows whose generation engine is
+  UNALIGNED with the official constrained decoding. A generation-vs-constrained-decoding
+  sensitivity view, NOT a reproduction.
+* ``default`` maps public columns to the renamed legacy ``*_lm_eval_baseline``
+  (loglikelihood) tasks. Diagnostic only -- NOT leaderboard-comparable. For historical
+  pre-rename result JSONs (bare task names), add ``--map public_col=old_task`` overrides.
 
 Usage examples
 --------------
@@ -32,13 +35,15 @@ Usage examples
 Load the public row from the GSMA dataset (requires network) and compare:
 
     python scripts/compare_gsma_leaderboard.py \\
-        --local-result results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.json \\
+        --profile gsma \\
+        --local-result results/open_telco_otlite_gsma/google__gemma-3-4b-it/<results>.json \\
         --model gemma3-4b
 
 Offline / no network -- supply the public row yourself via a JSON file:
 
     python scripts/compare_gsma_leaderboard.py \\
-        --local-result results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.json \\
+        --profile gsma \\
+        --local-result results/open_telco_otlite_gsma/google__gemma-3-4b-it/<results>.json \\
         --model gemma3-4b \\
         --public-json my_public_row.json
 
@@ -82,24 +87,28 @@ from typing import Any, Optional
 # Public leaderboard column -> local task name, per benchmark track.
 # Keys are the public GSMA/leaderboard benchmark columns; values are the local
 # lm-eval task names for that track.
+# Default ("lm_eval_baseline") profile -> the renamed legacy loglikelihood tasks.
+# These are diagnostic only and NOT leaderboard-comparable (use --profile gsma).
+# NOTE: historical pre-rename result JSONs used the bare names (e.g.
+# ``open_telco_teleqna``); for those, pass --map public_col=old_task overrides.
 MAPPING_OT_LITE: dict[str, str] = {
-    "teleqna": "open_telco_teleqna",
-    "teletables": "open_telco_teletables",
-    "oranbench": "open_telco_oranbench",
-    "srsranbench": "open_telco_srsranbench",
-    "telemath": "open_telco_telemath",
-    "telelogs": "open_telco_telelogs",
-    "three_gpp": "open_telco_3gpp_tsg_gen",
+    "teleqna": "open_telco_teleqna_lm_eval_baseline",
+    "teletables": "open_telco_teletables_lm_eval_baseline",
+    "oranbench": "open_telco_oranbench_lm_eval_baseline",
+    "srsranbench": "open_telco_srsranbench_lm_eval_baseline",
+    "telemath": "open_telco_telemath_lm_eval_baseline",
+    "telelogs": "open_telco_telelogs_lm_eval_baseline",
+    "three_gpp": "open_telco_3gpp_tsg_gen_lm_eval_baseline",
 }
 
 MAPPING_OT_FULL: dict[str, str] = {
-    "teleqna": "open_telco_full_teleqna",
-    "teletables": "open_telco_full_teletables",
-    "oranbench": "open_telco_full_oranbench",
-    "srsranbench": "open_telco_full_srsranbench",
-    "telemath": "open_telco_full_telemath",
-    "telelogs": "open_telco_full_telelogs",
-    "three_gpp": "open_telco_full_3gpp_tsg",
+    "teleqna": "open_telco_full_teleqna_lm_eval_baseline",
+    "teletables": "open_telco_full_teletables_lm_eval_baseline",
+    "oranbench": "open_telco_full_oranbench_lm_eval_baseline",
+    "srsranbench": "open_telco_full_srsranbench_lm_eval_baseline",
+    "telemath": "open_telco_full_telemath_lm_eval_baseline",
+    "telelogs": "open_telco_full_telelogs_lm_eval_baseline",
+    "three_gpp": "open_telco_full_3gpp_tsg_lm_eval_baseline",
 }
 
 # GSMA-aligned (non-default) profile mappings. These point at the additive
@@ -136,8 +145,8 @@ MC_ENGINE_UNALIGNED_COLUMNS = frozenset(
 )
 
 # Group names that hold the sample-weighted aggregate in the result JSON, by track.
-GROUP_NAME_OT_LITE = "open_telco_otlite"
-GROUP_NAME_OT_FULL = "open_telco_otfull"
+GROUP_NAME_OT_LITE = "open_telco_otlite_lm_eval_baseline"
+GROUP_NAME_OT_FULL = "open_telco_otfull_lm_eval_baseline"
 
 # Non-default GSMA-aligned group names (unweighted task mean).
 GROUP_NAME_OT_LITE_GSMA = "open_telco_otlite_gsma"

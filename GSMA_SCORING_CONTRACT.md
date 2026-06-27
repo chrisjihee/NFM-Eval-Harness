@@ -3,8 +3,10 @@
 마지막 갱신: 2026-06-27
 
 이 문서는 GSMA Open Telco AI 7-task의 **공식 task/scoring contract**를 코드 출처와 함께
-정리하고, 이 저장소의 비-default `*_gsma` / `*_mcgen` 변형이 그 contract와 어디까지
-정렬되고 어디서 어긋나는지를 명시한다.
+정리하고, 이 저장소의 **권장(기본) `*_gsma` profile**(`open_telco_otlite_gsma` /
+`open_telco_otfull_gsma`, run-script 기본값)과 진단용 `*_mcgen` 변형이 그 contract와 어디까지
+정렬되고 어디서 어긋나는지를 명시한다. (legacy loglikelihood baseline은 `*_lm_eval_baseline`로
+보존되며 diagnostic only이고 leaderboard 비교 대상이 아니다.)
 
 원칙(절대 변하지 않음): 이 저장소는 **lm-eval 기반 내부 baseline harness**이며 공식 GSMA
 Inspect AI stack의 **완전 재현이 아니다**. 아래 어디에도 "공식 GSMA 완전 재현" 주장은 없다.
@@ -65,9 +67,9 @@ dataset은 7 task 전부 `GSMA/ot-lite`(또는 `--full` 시 `GSMA/ot-full`), con
   MC 4종은 후보 격차 최대 기여(oranbench −0.293 / teleqna −0.202 / srsranbench −0.193)이므로,
   이 미정렬은 **가장 큰 미정렬 축이자 지배적 후보 격차 동인(dominant candidate-gap driver)**이다.
   `*_mcgen` delta는 **generation-vs-constrained-decoding sensitivity 측정일 뿐, 공식 재현이 아니다.**
-- 참고: 별도 default(legacy) lm-eval MC task(`open_telco_teleqna` 등)는 `output_type: multiple_choice`
-  → loglikelihood scoring으로, 공식 제약 디코딩과 또 다른 제3의 engine이다. `*_mcgen`은 이 두 축
-  어느 쪽과도 동일하지 않다.
+- 참고: 별도 legacy lm-eval MC task(`open_telco_teleqna_lm_eval_baseline` 등, diagnostic only)는
+  `output_type: multiple_choice` → loglikelihood scoring으로, 공식 제약 디코딩과 또 다른 제3의
+  engine이다. `*_mcgen`은 이 두 축 어느 쪽과도 동일하지 않다.
 
 ### 2.2 telemath — scorer 동일, prompt 결합은 known engine micro-difference
 

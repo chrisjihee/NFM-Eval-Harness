@@ -14,8 +14,16 @@ MODEL_NAME="${MODEL_NAME:-google/gemma-3-4b-it}"
 BACKEND="${BACKEND:-hf}"
 DEVICE="${DEVICE:-cuda:0}"
 BATCH_SIZE="${BATCH_SIZE:-auto}"
-OUTPUT_PATH="${OUTPUT_PATH:-${ROOT_DIR}/results/open_telco_otfull}"
-TASKS="${TASKS:-open_telco_otfull}"
+TASKS="${TASKS:-open_telco_otfull_gsma}"
+OUTPUT_PATH="${OUTPUT_PATH:-${ROOT_DIR}/results/${TASKS}}"
+
+# Bare legacy group names were renamed (PR: GSMA default). Fail fast with guidance.
+if [[ "${TASKS}" == "open_telco_otfull" || "${TASKS}" == "open_telco_otlite" ]]; then
+  echo "ERROR: '${TASKS}' was renamed. For GSMA-leaderboard-comparable evaluation use" >&2
+  echo "       open_telco_otfull_gsma (default; just omit TASKS). For the legacy" >&2
+  echo "       lm-eval/loglikelihood baseline use open_telco_otfull_lm_eval_baseline." >&2
+  exit 2
+fi
 DTYPE="${DTYPE:-bfloat16}"
 TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
 DATA_PARALLEL_SIZE="${DATA_PARALLEL_SIZE:-1}"

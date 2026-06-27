@@ -2,9 +2,15 @@
 
 마지막 갱신: 2026-06-27
 
+> **Rename 안내.** 권장/기본 실행 그룹은 `open_telco_otlite_gsma` /
+> `open_telco_otfull_gsma`입니다(run 스크립트 기본값 — `TASKS` 생략 시 실행).
+> legacy lm-eval baseline은 `open_telco_{otlite,otfull}_lm_eval_baseline`로 보존됩니다.
+> bare `open_telco_otlite` / `open_telco_otfull`은 실행 불가입니다(fail-fast).
+> 아래 과거 수치 중 bare 이름으로 기록된 것은 historical(rename 전 실행 사실)입니다.
+
 ## 2026-06-27 GSMA-aligned 프로파일 결과 (가장 중요)
 
-scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco_otlite_gsma`(unweighted)로 gemma-3-4b-it 실행:
+scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco_otlite_gsma`(unweighted, 권장/기본)로 gemma-3-4b-it 실행:
 
 - **unweighted 평균 `0.3992` ≈ public gemma3-4b `0.397` (delta +0.0022)**. 기존 ~−13.8%p 후보 격차의 거의 전부가 **scoring 방식(loglikelihood→generation) + 집계(sample-weighted→unweighted)** 로 설명됨.
 - per-task delta 전부 ±0.04 내: teleqna 0.661/oran 0.673/srsran 0.780/teletables 0.250/telemath 0.100/telelogs 0.090(faithful)/3gpp 0.240.
@@ -24,9 +30,9 @@ scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco
 3. **hf ↔ vllm parity OK** (MC |Δ|≤0.02).
 4. **집계방식 정정**: local group acc는 sample-weighted, public는 unweighted. gemma 동일기준 0.255 vs 0.397 = −0.142.
 
-## 현재 Baseline (재현, 2026-06-26)
+## Legacy lm-eval Baseline (재현, 2026-06-26)
 
-- 모델: `google/gemma-3-4b-it` | Backend: `hf` | Task group: `open_telco_otlite` (full)
+- 모델: `google/gemma-3-4b-it` | Backend: `hf` | Task group: `open_telco_otlite` (full) — historical pre-rename name; 현재 실행 이름은 `open_telco_otlite_lm_eval_baseline`.
 - default group acc(sample-weighted): `0.370` / 7-task 단순평균: `0.255`
 - `open_telco_otlite_mcgen`(비-default) group acc: `0.673`
 - 결과: `results/otlite-gemma3-4b-hf-2/google__gemma-3-4b-it/`
@@ -39,6 +45,7 @@ scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco
 
 ## ot-full 최초 full run (public와 동일 split, 2026-06-26)
 
+- Task group: `open_telco_otfull` — historical pre-rename name; 현재 실행 이름은 legacy `open_telco_otfull_lm_eval_baseline`(권장 기본은 `open_telco_otfull_gsma`).
 - 모델: `google/gemma-3-4b-it` | Backend: `vllm`(tp=2) | 16,866 docs
 - default unweighted **0.251** vs public **0.397** (delta −0.146); group(sample-weighted) 0.354
 - **mcgen near-reproduction (대규모 N)**: teleqna 0.422→**0.630**(pub 0.652, N=10k), oranbench 0.353→**0.635**(pub 0.660), srsranbench 0.551→**0.777**(pub 0.740)

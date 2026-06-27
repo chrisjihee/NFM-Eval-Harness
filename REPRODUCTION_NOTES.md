@@ -65,20 +65,34 @@ Public task scores:
 | `three_gpp` | 0.200000 |
 | `average` | 0.397000 |
 
-## Current local baseline
+## Comparison basis (read first)
 
-Current tracked local result:
+The **only leaderboard-comparable basis** is the recommended `_gsma` profile
+(`open_telco_otlite_gsma` / `open_telco_otfull_gsma`) reduced to the **7-task unweighted
+task mean**. The legacy `_lm_eval_baseline` groups (former bare `open_telco_otlite` /
+`open_telco_otfull`) are **diagnostic only and unsuitable for public comparison** — their
+sample-weighted group `acc` is not directly comparable to the public unweighted average
+(see "Aggregation method" below).
+
+Historical run numbers are preserved under their **pre-rename names** (the rename to
+`_lm_eval_baseline` happened after these runs); they are not retroactively renamed.
+
+## Current local baseline (historical, pre-rename names)
+
+Tracked legacy local result. This is a historical diagnostic run from before the rename,
+so it keeps its pre-rename task/group names (`open_telco_otlite`, etc.). It is **not**
+leaderboard-comparable; use a `_gsma` run for public comparison.
 
 ```text
 model: google/gemma-3-4b-it
 backend: hf
-task group: open_telco_otlite
+task group: open_telco_otlite   (pre-rename; now open_telco_otlite_lm_eval_baseline)
 result file: results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.md
 ```
 
-Local task scores:
+Local task scores (historical pre-rename names):
 
-| Local task | Local score | Public mapping |
+| Local task (pre-rename) | Local score | Public mapping |
 |---|---:|---|
 | `open_telco_teleqna` | 0.4500 | `teleqna` |
 | `open_telco_teletables` | 0.2000 | `teletables` |
@@ -94,9 +108,11 @@ Local task scores:
 The earlier "about 2.5 percentage points" statement was an aggregation-method mismatch,
 not a like-for-like comparison. The two "averages" are computed differently:
 
-- Local group `acc = 0.3718` (`open_telco_otlite`) is **sample-weighted**. The group YAML
-  does not override `weight_by_size`, so the lm_eval fork default `weight_by_size=True`
-  applies, and the high-sample-count `teleqna` task (1000 samples) dominates the group score.
+- Local group `acc = 0.3718` (historical `open_telco_otlite`, now
+  `open_telco_otlite_lm_eval_baseline`) is **sample-weighted**. The group YAML does not
+  override `weight_by_size`, so the lm_eval fork default `weight_by_size=True` applies, and
+  the high-sample-count `teleqna` task (1000 samples) dominates the group score. This legacy
+  baseline is diagnostic only and not leaderboard-comparable.
 - The public leaderboard `average = 0.397` is an **unweighted task mean** (equal weight per
   benchmark column).
 - The local **unweighted 7-task simple mean** of the same task scores is **0.259**.
@@ -205,7 +221,8 @@ Possible differences:
 
 ### 2. `ot-lite` is not public leaderboard/full score
 
-The current local baseline is `open_telco_otlite`, not `open_telco_otfull`.
+The current local baseline runs on `ot-lite` (`open_telco_otlite_gsma`, or the legacy
+`open_telco_otlite_lm_eval_baseline`), not on `ot-full` (`open_telco_otfull_gsma`).
 
 Do not compare `ot-lite` scores directly against public leaderboard scores as if they were the same dataset.
 
@@ -281,20 +298,23 @@ evidence. Large per-sample dumps and raw logs (`*_samples_*.jsonl`, `samples_*.j
 ### Step 1. Confirm task loading (bounded smoke)
 
 Run a bounded smoke first so a copy-paste never triggers a full GPU run. The runner
-enforces this via the `LIMIT` guard:
+enforces this via the `LIMIT` guard. The run script defaults to the recommended
+`open_telco_otlite_gsma` group, so `TASKS` can be omitted:
 
 ```bash
 LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
-If you must call `lm_eval` directly, always pass `--limit`:
+If you must call `lm_eval` directly, always pass `--limit`. Use a runnable task name —
+the recommended `_gsma` member or the legacy `_lm_eval_baseline` diagnostic (the bare
+`open_telco_teleqna` was renamed):
 
 ```bash
 lm_eval \
   --model hf \
   --model_args pretrained=google/gemma-3-4b-it \
   --include_path ./open_telco_lm_eval/tasks \
-  --tasks open_telco_teleqna \
+  --tasks open_telco_teleqna_mcgen \
   --limit 5 \
   --device cuda:0 \
   --batch_size auto \
@@ -303,13 +323,15 @@ lm_eval \
 
 ### Step 2. Re-run `ot-lite` (full run, explicit confirm)
 
-A full run requires an explicit confirmation flag:
+A full run requires an explicit confirmation flag. Defaults to `open_telco_otlite_gsma`:
 
 ```bash
 CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
 ### Step 3. Run `ot-full` (full run, explicit confirm)
+
+Defaults to `open_telco_otfull_gsma`:
 
 ```bash
 CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
@@ -319,17 +341,18 @@ This is the more relevant comparison target for public leaderboard alignment.
 
 ### Step 4. Compare with public row
 
-After implementing the comparison script:
+The default `--profile default` maps the legacy `*_lm_eval_baseline` tasks and is
+**diagnostic only — not leaderboard-comparable**:
 
 ```bash
 python scripts/compare_gsma_leaderboard.py \
   --model gemma3-4b \
-  --local-result <path-to-local-result-json>
+  --local-result <path-to-lm_eval_baseline-result-json>
 ```
 
-For a GSMA-aligned (`*_gsma` / `*_mcgen`) result, add `--profile gsma` so the public columns
-map to the aligned tasks and the output leads with the per-task delta table plus the
-MC-engine-unaligned caveat:
+For a leaderboard comparison use the **recommended** GSMA-aligned (`*_gsma` / `*_mcgen`)
+result with `--profile gsma`, so the public columns map to the aligned tasks and the output
+leads with the per-task delta table plus the MC-engine-unaligned caveat:
 
 ```bash
 python scripts/compare_gsma_leaderboard.py \

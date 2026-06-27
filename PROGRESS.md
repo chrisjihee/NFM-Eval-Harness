@@ -6,10 +6,17 @@
 
 - 이 저장소에는 GSMA `ot-lite`와 `ot-full`을 위한 LM-Evaluation-Harness task
   정의가 들어 있습니다.
-- `open_telco_otlite`는 7개 benchmark `acc` 점수의 단순 평균을 사용하는 비교용
-  task pack입니다.
-- `open_telco_otfull`은 공개 Open Telco leaderboard의 7개 benchmark column을
-  맞추는 방향으로 구성되어 있습니다.
+- **task name 정책 (rename)**: 기본/권장 GSMA-compatible 그룹은
+  `open_telco_otlite_gsma` / `open_telco_otfull_gsma`입니다(run 스크립트 기본값 —
+  `TASKS`를 생략하면 이 그룹이 실행됨, unweighted). legacy lm-eval/loglikelihood
+  baseline은 `open_telco_otlite_lm_eval_baseline` /
+  `open_telco_otfull_lm_eval_baseline`로 보존됩니다(삭제 안 함, diagnostic).
+  bare `open_telco_otlite` / `open_telco_otfull`은 **실행 불가**입니다(run
+  스크립트가 fail-fast). `*_mcgen`은 diagnostic(불변)입니다.
+- `open_telco_otlite_lm_eval_baseline`(구 `open_telco_otlite`)은 7개 benchmark
+  `acc` 점수의 평균을 사용하는 비교용 task pack입니다.
+- `open_telco_otfull_lm_eval_baseline`(구 `open_telco_otfull`)은 공개 Open Telco
+  leaderboard의 7개 benchmark column을 맞추는 방향으로 구성되어 있습니다.
 - 실행 스크립트는 Hugging Face backend와 vLLM backend를 지원합니다.
 - 이후 agent가 commit된 repo 파일만 보고도 문맥을 회복할 수 있도록 Codex
   Local/Cloud handoff 문서를 추가했습니다.
@@ -19,7 +26,8 @@
 - 날짜: 2026-05-15
 - 모델: `google/gemma-3-4b-it`
 - Backend: Hugging Face
-- Task group: `open_telco_otlite`
+- Task group: `open_telco_otlite` (historical pre-rename name; 현재 실행 이름은
+  legacy `open_telco_otlite_lm_eval_baseline`. 권장 기본은 `open_telco_otlite_gsma`.)
 - 결과: `acc=0.3718`
 - 결과 파일:
   `results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.md`
@@ -86,7 +94,7 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 
 ## 다음 작업
 
-- **[critical 게이트]** `open_telco_otfull` 최초 full run (사용자 승인 후) — public leaderboard와 같은 split.
+- **[critical 게이트]** legacy `open_telco_otfull_lm_eval_baseline` 추가 full run (사용자 승인 후) — public leaderboard와 같은 split. (현재 권장/기본 실행은 `open_telco_otfull_gsma`이며 이미 완료됨.)
 - generation-budget 실험(`max_gen_toks`↑ + `until` 완화)로 telemath/3gpp 저점수 원인 확정.
 - TeleTables 원본 표 데이터(`TELETABLES_ROOT`) 확보 시도 후 teletables 재측정.
 - (선택) `*_mcgen` 공식 추출 방식 확인 시 default 승격 재검토(별도 승인).

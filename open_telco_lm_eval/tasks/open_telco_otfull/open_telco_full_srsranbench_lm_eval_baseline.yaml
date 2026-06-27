@@ -1,4 +1,7 @@
-task: open_telco_full_srsranbench
+# LEGACY lm-eval/loglikelihood baseline (renamed from `open_telco_full_srsranbench`).
+# NOT GSMA-leaderboard-comparable -- diagnostic only. Use the *_gsma profile
+# (open_telco_otlite_gsma / open_telco_otfull_gsma) for leaderboard comparison.
+task: open_telco_full_srsranbench_lm_eval_baseline
 dataset_path: GSMA/ot-full
 dataset_name: srsranbench
 output_type: multiple_choice

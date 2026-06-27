@@ -1,3 +1,10 @@
+> **Task name 정책 (rename).** 이 문서의 task 이름 예시는 viability 설명용입니다.
+> 현재 권장/기본 실행 그룹은 `open_telco_otlite_gsma` / `open_telco_otfull_gsma`
+> (run 스크립트 기본값, unweighted), legacy lm-eval baseline은
+> `open_telco_{otlite,otfull}_lm_eval_baseline`로 보존됩니다. bare
+> `open_telco_otlite` / `open_telco_otfull`은 실행 불가(fail-fast)입니다.
+> `*_mcgen`은 diagnostic(불변)입니다.
+
 네, **가능합니다.** 다만 정확히는 두 수준으로 나누어 봐야 합니다.
 
 1. **공식 GSMA 리더보드 재현**: GSMA의 공개 설명 기준으로 Open Telco는 현재 **Inspect AI 기반** 평가 suite로 운영됩니다. 따라서 리더보드와 완전히 동일한 점수를 재현하려면 GSMA의 Inspect AI/evals 또는 Satellite 쪽을 쓰는 것이 정석입니다. GSMA Hugging Face 설명에서도 Open Telco가 Inspect AI framework 위에 구축되어 있고, `ot-full`, `ot-lite`, leaderboard scores를 제공한다고 설명합니다. ([Hugging Face][1])
@@ -47,7 +54,7 @@ lm_eval \
   --model hf \
   --model_args pretrained=meta-llama/Llama-3.2-3B-Instruct,dtype=bfloat16 \
   --include_path ./open_telco_lm_eval/tasks \
-  --tasks open_telco_teleqna,open_telco_3gpp_tsg,open_telco_telemath \
+  --tasks open_telco_teleqna_lm_eval_baseline,open_telco_3gpp_tsg_gen_lm_eval_baseline,open_telco_telemath_lm_eval_baseline \
   --limit 5 \
   --device cuda:0 \
   --batch_size auto \
@@ -55,7 +62,9 @@ lm_eval \
   --output_path ./results/open_telco_baseline
 ```
 
-위는 `--limit 5` 를 동반한 bounded smoke 예시입니다. 전체 run은 가드를 거쳐 실행합니다.
+위는 `--limit 5` 를 동반한 bounded smoke 예시입니다(개별 sub-task는 실행 가능; bare
+group `open_telco_otlite` / `open_telco_otfull`만 fail-fast). 전체 run은 가드를 거쳐
+실행하며, `TASKS` 생략 시 권장/기본 `*_gsma` 그룹이 실행됩니다.
 bounded smoke: `LIMIT=5 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh`,
 full run: `CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh`.
 

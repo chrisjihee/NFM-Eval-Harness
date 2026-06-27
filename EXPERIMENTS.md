@@ -3,6 +3,15 @@
 이 파일은 benchmark 실행을 짧게 정리하는 index입니다. Raw log나 큰 산출물은
 넣지 않고, 필요하면 추적되는 summary 또는 local path만 연결합니다.
 
+> **Rename 안내 (historical preservation).** 아래 Run Index와 과거 run 섹션의
+> task 이름(`open_telco_otlite` / `open_telco_otfull` 및 결과 경로
+> `results/open_telco_otlite/...`)은 **그 run이 실제로 그 이름으로 실행된
+> 역사적 사실**이며 그대로 보존합니다. 이후 rename 정책으로 bare
+> `open_telco_otlite` / `open_telco_otfull`은 실행 불가가 되었고, 현재 실행
+> 이름은 권장/기본 `open_telco_{otlite,otfull}_gsma` 또는 legacy
+> `open_telco_{otlite,otfull}_lm_eval_baseline`입니다. 새 실행 명령은 이 새
+> 이름을 씁니다.
+
 ## Run Index
 
 | Date | Run ID | Model | Backend | Tasks | Result | Notes |

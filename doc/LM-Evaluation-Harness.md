@@ -1,6 +1,15 @@
 # lm-eval-harness
 평가 프레임워크
 
+> **Task name 정책 (rename).** 권장/기본 GSMA-compatible 그룹은
+> `open_telco_otlite_gsma` / `open_telco_otfull_gsma`입니다(run 스크립트 기본값,
+> `TASKS` 생략 시 실행, unweighted). legacy lm-eval/loglikelihood baseline은
+> `open_telco_{otlite,otfull}_lm_eval_baseline`로 보존됩니다(diagnostic;
+> sub-task도 `_lm_eval_baseline` postfix, 예: `open_telco_teleqna_lm_eval_baseline`).
+> bare group `open_telco_otlite` / `open_telco_otfull`은 **실행 불가**입니다(run
+> 스크립트가 fail-fast). `*_mcgen`은 diagnostic(불변)입니다. 아래 raw `lm_eval`
+> 예시는 새 task 이름을 사용합니다.
+
 ---
 
 ## lm-eval-harness
@@ -131,13 +140,15 @@ lm_eval \
 
 ---
 
-## LM-Evaluation-Harness(open_telco_otlite)
+## LM-Evaluation-Harness(open_telco_otlite_gsma / _lm_eval_baseline)
 
-- open_telco_otlite
+- 권장/기본: `open_telco_otlite_gsma` (run 스크립트 기본값, unweighted)
+- legacy diagnostic: `open_telco_otlite_lm_eval_baseline` (구 `open_telco_otlite`)
 - leaderboard-style 7-task pack
 - teleqna, teletables, oranbench, srsranbench, telemath, telelogs, 3gpp_tsg
+- bare `open_telco_otlite`은 실행 불가(fail-fast)
 
-권장: 전체 GPU run은 runner 스크립트의 가드를 거쳐 실행합니다.
+권장: 전체 GPU run은 runner 스크립트의 가드를 거쳐 실행합니다(`TASKS` 생략 시 `*_gsma` 기본).
 
 ```bash
 # bounded smoke (limit 강제)
@@ -154,7 +165,7 @@ lm_eval \
   --model hf \
   --model_args pretrained=google/gemma-3-4b-it \
   --include_path open_telco_lm_eval/tasks \
-  --tasks open_telco_otlite \
+  --tasks open_telco_otlite_gsma \
   --limit 5 \
   --device cuda:0 \
   --batch_size 4 \
@@ -167,7 +178,7 @@ CUDA_VISIBLE_DEVICES=1 lm_eval \
   --model vllm \
   --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=1,gpu_memory_utilization=0.5 \
   --include_path open_telco_lm_eval/tasks \
-  --tasks open_telco_otlite \
+  --tasks open_telco_otlite_gsma \
   --limit 5 \
   --batch_size 4 \
   --apply_chat_template \
@@ -179,7 +190,7 @@ CUDA_VISIBLE_DEVICES=2,3 lm_eval \
   --model vllm \
   --model_args pretrained=google/gemma-3-4b-it,dtype=bfloat16,tensor_parallel_size=2,data_parallel_size=1,gpu_memory_utilization=0.5 \
   --include_path open_telco_lm_eval/tasks \
-  --tasks open_telco_otlite \
+  --tasks open_telco_otlite_gsma \
   --limit 5 \
   --batch_size 4 \
   --apply_chat_template \
@@ -199,24 +210,27 @@ CONFIRM_FULL_RUN=1 \
 
 ```bash
 CONFIRM_FULL_RUN=1 \
-  TASKS=open_telco_otlite_core4 \
+  TASKS=open_telco_otlite_core4_lm_eval_baseline \
   MODEL_NAME=google/gemma-3-4b-it \
   ./run_open_telco_otlite.sh
 ```
 
-- `open_telco_otlite` group score는 7개 벤치마크 `acc` 의 **sample-weighted** 평균으로 집계 (lm_eval fork 기본 `weight_by_size=True`, group YAML 미override; teleqna 1000샘플 지배). 동일가중 task mean은 별도 계산
-- `open_telco_otlite_core4`는 기존 4-task 실험 재현용 legacy 그룹
+- `open_telco_otlite_gsma` group score(권장/기본)는 7개 벤치마크의 **unweighted** task mean으로 집계 (`weight_by_size: false`)
+- `open_telco_otlite_lm_eval_baseline` group score(구 `open_telco_otlite`)는 7개 벤치마크 `acc` 의 **sample-weighted** 평균으로 집계 (lm_eval fork 기본 `weight_by_size=True`, group YAML 미override; teleqna 1000샘플 지배). 동일가중 task mean은 별도 계산
+- `open_telco_otlite_core4_lm_eval_baseline`(구 `open_telco_otlite_core4`)는 기존 4-task 실험 재현용 legacy 그룹
 
 ---
 
-## LM-Evaluation-Harness(open_telco_otfull)
+## LM-Evaluation-Harness(open_telco_otfull_gsma / _lm_eval_baseline)
 
-- open_telco_otfull
+- 권장/기본: `open_telco_otfull_gsma` (run 스크립트 기본값, unweighted)
+- legacy diagnostic: `open_telco_otfull_lm_eval_baseline` (구 `open_telco_otfull`)
 - leaderboard-style 7-task pack
 - teleqna, teletables, oranbench, srsranbench, telemath, telelogs, 3gpp_tsg
+- bare `open_telco_otfull`은 실행 불가(fail-fast)
 
-전체 GPU run이므로 각 명령에 `CONFIRM_FULL_RUN=1` 가드를 동반합니다. 빠른 확인은
-`CONFIRM_FULL_RUN=1` 대신 `LIMIT=5` 를 사용하세요.
+전체 GPU run이므로 각 명령에 `CONFIRM_FULL_RUN=1` 가드를 동반합니다(`TASKS` 생략 시
+`*_gsma` 기본). 빠른 확인은 `CONFIRM_FULL_RUN=1` 대신 `LIMIT=5` 를 사용하세요.
 
 ```bash
 CONFIRM_FULL_RUN=1 \
@@ -249,6 +263,7 @@ CONFIRM_FULL_RUN=1 \
   ./run_open_telco_otfull.sh
 ```
 
-- `open_telco_otfull` group score는 7개 벤치마크 `acc` 의 **sample-weighted** 평균으로 집계 (lm_eval fork 기본 `weight_by_size=True`, group YAML 미override)
+- `open_telco_otfull_gsma` group score(권장/기본)는 7개 벤치마크의 **unweighted** task mean으로 집계 (`weight_by_size: false`)
+- `open_telco_otfull_lm_eval_baseline` group score(구 `open_telco_otfull`)는 7개 벤치마크 `acc` 의 **sample-weighted** 평균으로 집계 (lm_eval fork 기본 `weight_by_size=True`, group YAML 미override)
 - `3gpp_tsg`, `telemath`, `telelogs`는 generation 후 custom parser로 채점
 - `teletables`는 `GSMA/ot-full` 공개 row만으로도 실행되며, 원본 표 파일이 있으면 `TELETABLES_ROOT=/path/to/tables`를 주어 프롬프트에 자동 주입 가능
