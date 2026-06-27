@@ -53,6 +53,8 @@ case "${BACKEND}" in
     if [[ -n "${MAX_LENGTH}" ]]; then
       HF_MODEL_ARGS="${HF_MODEL_ARGS},max_length=${MAX_LENGTH}"
     fi
+    # Opt-in extra model_args passthrough (e.g. enable_thinking=False). No-op if unset.
+    HF_MODEL_ARGS="${HF_MODEL_ARGS}${EXTRA_MODEL_ARGS:+,${EXTRA_MODEL_ARGS}}"
 
     lm_eval \
       --model hf \
@@ -62,6 +64,7 @@ case "${BACKEND}" in
       --device "${DEVICE}" \
       --batch_size "${BATCH_SIZE}" \
       --apply_chat_template \
+      ${LOG_SAMPLES:+--log_samples} \
       ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} \
       --output_path "${OUTPUT_PATH}"
     ;;
@@ -74,6 +77,8 @@ case "${BACKEND}" in
     if [[ -n "${MAX_MODEL_LEN}" ]]; then
       MODEL_ARGS="${MODEL_ARGS},max_model_len=${MAX_MODEL_LEN}"
     fi
+    # Opt-in extra model_args passthrough (e.g. enable_thinking=False). No-op if unset.
+    MODEL_ARGS="${MODEL_ARGS}${EXTRA_MODEL_ARGS:+,${EXTRA_MODEL_ARGS}}"
 
     lm_eval \
       --model vllm \
@@ -82,6 +87,7 @@ case "${BACKEND}" in
       --tasks "${TASKS}" \
       --batch_size "${BATCH_SIZE}" \
       --apply_chat_template \
+      ${LOG_SAMPLES:+--log_samples} \
       ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} \
       --output_path "${OUTPUT_PATH}"
     ;;
