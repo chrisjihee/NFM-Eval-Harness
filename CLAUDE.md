@@ -49,6 +49,7 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 | `open_telco_otlite` | 7-task: `open_telco_teleqna` / `open_telco_teletables` / `open_telco_oranbench` / `open_telco_srsranbench` / `open_telco_telemath` / `open_telco_telelogs` / `open_telco_3gpp_tsg_gen` | 3gpp 그룹은 **생성형** `open_telco_3gpp_tsg_gen` |
 | `open_telco_otlite_core4` | legacy 4-task MC | MC 변형 `open_telco_3gpp_tsg`는 **이 legacy core4 전용** |
 | `open_telco_otfull` | `open_telco_full_*` 7-task | `utils.py`가 ot-lite utils를 importlib로 재노출 |
+| `open_telco_{otlite,otfull}_gsma` | 비-default 7-task: MC 4종 `*_mcgen`(teletables 포함) + 생성형 3종 `*_gsma` | scorer만 공식(`gsma-evals`) 정렬, engine은 미정렬(특히 MC). unweighted(`weight_by_size: false`). 상세는 `GSMA_SCORING_CONTRACT.md` |
 
 중요: 3gpp 그룹의 정확한 생성형 task 이름은 `open_telco_3gpp_tsg_gen`이다. MC 변형 `open_telco_3gpp_tsg`는 legacy `open_telco_otlite_core4`에서만 쓴다.
 
@@ -58,6 +59,8 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 
 MC task(`teleqna` / `teletables` / `oranbench` / `srsranbench`)는 `output_type: multiple_choice` → loglikelihood scoring.
 생성형 task(`telemath` / `telelogs` / `3gpp_tsg_gen`)는 `generate_until`, 전부 `until: ["\n"]`, `do_sample=false`, `max_gen_toks`는 telemath **48** / telelogs **24** / 3gpp_tsg_gen **32**.
+
+**GSMA 정렬 프로파일(`*_gsma` / `*_mcgen`, 비-default)**: scorer만 공식 `gsma-evals/src/evals/*` 소스와 정렬한 additive 그룹이다. default scoring은 동결. **"공식 GSMA 완전 재현"을 주장하지 않는다**(= public 코드 정렬 시도). scorer-aligned이되 **engine은 다르다**: MC 4종은 자유 single-letter `generate_until`(`max_gen_toks:8`)로 공식 제약 디코딩(`multiple_choice(cot=False)`)과 **미정렬 — 가장 큰 미정렬 축이자 지배적 후보 격차 동인**. 생성형 3종 `*_gsma`는 `until:[]` + `max_gen_toks:256`(scorer-fit/cost, parity-loss 아님)이고 scorer는 공식 동일(telemath isclose 0.01 / telelogs soft 첫 정수 / 3gpp WG regex first-match). telelogs/3gpp는 `\boxed{}`/WG token 미출력 시 soft scorer가 무조건 INCORRECT → **collapse 위험**이므로 smoke emission-rate(≥0.30)가 HARD gate, 미달 시 `*_gsma_hinted` 변형으로 대체 측정. 전체 contract는 `GSMA_SCORING_CONTRACT.md` 참조.
 
 ## 핵심 진단 (north star — 독립 검증 완료, 귀인은 미확정)
 
@@ -147,7 +150,23 @@ MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
 
 # vLLM 백엔드 (.venv activate 보장 위해 run 스크립트 경유)
 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
+
+# GSMA 정렬 그룹 — TASKS만 바꾸면 됨(run 스크립트는 --include_path로 신규 YAML 자동 발견)
+# 1) ot-lite_gsma smoke (HARD gate: drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율 측정)
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma DEVICE=cuda:0 LIMIT=20 \
+  OUTPUT_PATH=results/open_telco_otlite_gsma_smoke ./run_open_telco_otlite.sh
+# 2) 게이트 통과 후 ot-lite_gsma full
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma CONFIRM_FULL_RUN=1 \
+  OUTPUT_PATH=results/open_telco_otlite_gsma ./run_open_telco_otlite.sh
+# 3) compare (per-task delta 표 먼저 + 라벨링된 unweighted mean + MC engine 미정렬 caveat)
+python scripts/compare_gsma_leaderboard.py --profile gsma --model gemma3-4b \
+  --local-result <ot-lite_gsma .json> --out-md results/<...>-gsma-delta.md
+# 4) ot-full_gsma full (vLLM; 게이트 통과 + 사용자 승인 시에만)
+BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otfull_gsma \
+  CONFIRM_FULL_RUN=1 OUTPUT_PATH=results/open_telco_otfull_gsma ./run_open_telco_otfull.sh
 ```
+
+**GSMA collapse gate 절차**: ot-lite_gsma smoke(LIMIT=20)에서 telemath/telelogs `\boxed{}` 출력률과 3gpp WG-token 매치율을 측정한다. 어느 하나라도 **< 0.30**이면 full ot-full_gsma run을 BLOCK하고, 해당 task를 `*_gsma_hinted`(+1-line gold-free 출력형식 지시) 변형으로 LIMIT=20 재측정해 emission-rate 회복 시에만 사용자 승인하에 비교군으로 진행한다(절차 상세: `GSMA_SCORING_CONTRACT.md` §2.3).
 
 프로덕션 실행은 raw `lm_eval` 직접 호출 대신 가드된 run 스크립트(`LIMIT=N` 또는 `CONFIRM_FULL_RUN=1`)를 사용한다.
 

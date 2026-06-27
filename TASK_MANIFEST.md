@@ -1,6 +1,6 @@
 # Task manifest: Open Telco tasks in NFM-Eval-Harness
 
-Last updated: 2026-06-25
+Last updated: 2026-06-27
 
 This manifest describes the current LM-Evaluation-Harness task packs implemented in this repository.
 
@@ -17,6 +17,12 @@ The public `GSMA/leaderboard` dataset has 7 benchmark columns:
 | `telemath` | `open_telco_telemath` | `open_telco_full_telemath` |
 | `telelogs` | `open_telco_telelogs` | `open_telco_full_telelogs` |
 | `three_gpp` | `open_telco_3gpp_tsg_gen` | `open_telco_full_3gpp_tsg` |
+
+For the non-default GSMA-aligned profile, the public columns map to the `*_mcgen` /
+`*_gsma` tasks instead (see `compare_gsma_leaderboard.py --profile gsma` and
+`GSMA_SCORING_CONTRACT.md`): `teleqna→*_teleqna_mcgen`, `teletables→*_teletables_mcgen`,
+`oranbench→*_oranbench_mcgen`, `srsranbench→*_srsranbench_mcgen`, `telemath→*_telemath_gsma`,
+`telelogs→*_telelogs_gsma`, `three_gpp→*_3gpp_tsg_gsma`.
 
 ## Group tasks
 
@@ -89,6 +95,63 @@ open_telco_full_telemath
 open_telco_full_telelogs
 open_telco_full_3gpp_tsg
 ```
+
+### `open_telco_otlite_gsma` / `open_telco_otfull_gsma` (NON-DEFAULT, GSMA-aligned)
+
+Dataset: `GSMA/ot-lite` / `GSMA/ot-full`.
+
+Purpose: non-default profile whose **scorers mirror the `gsma-evals` source**
+(`gsma-evals/src/evals/<task>/*.py`). Additive only; the default groups above are
+unchanged. See `GSMA_SCORING_CONTRACT.md` for the per-task official contract and the
+scorer-aligned vs engine-different split.
+
+Group `metadata.version`: v0.1.
+
+Aggregation: **unweighted task mean** (`weight_by_size: false`, explicit override of the
+lm_eval fork default `weight_by_size=True`). The unweighted mean is a leaderboard
+convention only; the official `run_evals.py` computes no cross-task average.
+
+`open_telco_otlite_gsma` tasks:
+
+```text
+open_telco_teleqna_mcgen
+open_telco_oranbench_mcgen
+open_telco_srsranbench_mcgen
+open_telco_teletables_mcgen
+open_telco_telemath_gsma
+open_telco_telelogs_gsma
+open_telco_3gpp_tsg_gsma
+```
+
+`open_telco_otfull_gsma` tasks: the `open_telco_full_*` counterparts of the above.
+
+> **MC engine is UNALIGNED**: the 4 MC `*_mcgen` tasks use free single-letter
+> `generate_until` instead of the official constrained `multiple_choice(cot=False)`
+> decoding. This is the largest unaligned axis and the dominant candidate-gap driver;
+> the MC delta measures generation-vs-constrained-decoding sensitivity, not reproduction.
+
+### New GSMA-aligned task rows
+
+`max_gen_toks=256` (generation `*_gsma`) is a deliberate scorer-fit/cost choice (the
+scorer reads only the last `\boxed{}` / first WG token), not a parity loss. `max_gen_toks=8`
+(MC `*_mcgen`) matches the existing `*_mcgen` single-letter pattern.
+
+| Task (otlite / otfull) | output_type | until | max_gen_toks | scorer rule (source) |
+|---|---|---|---:|---|
+| `open_telco_teletables_mcgen` / `open_telco_full_teletables_mcgen` | `generate_until` | `["\n"]` | 8 | free letter vs `int(answer)` 0-based; table NOT injected (`teletables.py:25,44-45`) |
+| `open_telco_telemath_gsma` / `open_telco_full_telemath_gsma` | `generate_until` | `[]` | 256 | last `\boxed{}` → `isclose(rel_tol/abs_tol=0.01)` + exact fallback (`telemath.py:42-62`) |
+| `open_telco_telelogs_gsma` / `open_telco_full_telelogs_gsma` | `generate_until` | `[]` | 256 | soft: first int of last `\boxed{}` vs first int of answer (`telelogs.py:41-54`) |
+| `open_telco_3gpp_tsg_gsma` / `open_telco_full_3gpp_tsg_gsma` | `generate_until` | `[]` | 256 | first WG-token `([A-Z]+\d+(?:-[A-Z]+)?)` ignorecase vs raw answer (`three_gpp.py:12,30`) |
+
+The pre-existing `open_telco_{teleqna,oranbench,srsranbench}_mcgen` (+ `_full_` and the
+`open_telco_otlite_mcgen` / `open_telco_otfull_mcgen` groups) share the MC `*_mcgen`
+pattern (`generate_until`, `until: ["\n"]`, `max_gen_toks: 8`). Optional collapse-gate
+fallbacks `doc_to_text_telelogs_gsma_hinted` / `doc_to_text_3gpp_gsma_hinted` add a single
+gold-free output-format line and are promoted to YAML only if the smoke emission-rate gate
+triggers (see `GSMA_SCORING_CONTRACT.md` §2.3).
+
+All `*_gsma` / `*_mcgen` task and group YAML carry `metadata.version: 0.1` and
+`gsma_aligned: scorer-only`.
 
 ## Per-task `metadata.version`
 
@@ -214,9 +277,11 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 
 ## Scripts
 
-- `scripts/compare_gsma_leaderboard.py`: leaderboard comparison helper. Added in this
-  documentation pass (now part of the repo). Compares a local result JSON against a
-  public `GSMA/leaderboard` row.
+- `scripts/compare_gsma_leaderboard.py`: leaderboard comparison helper. Compares a local
+  result JSON against a public `GSMA/leaderboard` row. `--profile {default,gsma}` selects
+  the mapping: `default` (byte-identical to prior behavior) maps the legacy tasks; `gsma`
+  maps the `*_mcgen` / `*_gsma` tasks and emits a per-task delta table first, then a
+  labeled unweighted mean, with an MC-engine-unaligned caveat.
 
 ## Known global issues
 

@@ -1,6 +1,6 @@
 # Reproduction notes: GSMA Open Telco leaderboard alignment
 
-Last updated: 2026-06-25
+Last updated: 2026-06-27
 
 ## Purpose
 
@@ -122,6 +122,37 @@ Two inputs needed to attribute the gap are currently UNKNOWN, so the cause is un
 
 Until both are known, treat the gap as observed, not explained.
 
+## GSMA-aligned `*_gsma` profile (non-default)
+
+A non-default profile `open_telco_{otlite,otfull}_gsma` was added whose **scorers mirror the
+`gsma-evals` source** (`gsma-evals/src/evals/<task>/*.py`). Full per-task contract and the
+scorer-aligned vs engine-different split live in `GSMA_SCORING_CONTRACT.md`. Key points for
+interpreting `*_gsma` numbers:
+
+- **MC engine is the dominant unaligned axis.** The 4 MC tasks
+  (`teleqna`/`teletables`/`oranbench`/`srsranbench`) use the `*_mcgen` free single-letter
+  `generate_until` path, while the official stack uses constrained `multiple_choice(cot=False)`
+  decoding. These MC tasks carry the largest candidate-gap contributions
+  (`oranbench` −0.293, `teleqna` −0.202, `srsranbench` −0.193), so this engine mismatch is
+  the **dominant candidate-gap driver**. The MC delta measures
+  generation-vs-constrained-decoding sensitivity, **not reproduction**.
+- **Generation `*_gsma` scorers are aligned, engines are not.** `telemath` uses the official
+  `isclose(rel_tol/abs_tol=0.01)` + exact fallback; `telelogs` uses the official soft
+  first-int scorer; `3gpp` uses the official first-match WG regex (case-insensitive). The
+  scorers are identical to source, but the generation engine (lm-eval `generate_until` vs
+  Inspect `generate`) differs. `telemath` also folds the official system prompt into a single
+  prompt (lm-eval has no system-solver) — a known engine micro-difference, not parity.
+- **Boxed/WG collapse risk.** The official soft scorers mark a sample INCORRECT whenever the
+  model emits no `\boxed{}` (telemath/telelogs) or no WG token (3gpp). With raw prompts and a
+  weak/base model, emission rate can be near-zero and the score can collapse to ~0. A smoke
+  (LIMIT=20) HARD gate measures the boxed/WG emission rates; if any is **< 0.30**, the full
+  ot-full run is BLOCKED and the affected task is re-measured with a `*_gsma_hinted`
+  (+1 gold-free output-format line) variant before any approved continuation.
+- **Unweighted mean is convention only.** The `*_gsma` groups aggregate with
+  `weight_by_size: false`; the unweighted 7-task mean is a leaderboard convention, not a value
+  computed by the official `run_evals.py`. No official runtime/provider/revision parity is
+  claimed for `*_gsma`.
+
 ## Initial interpretation
 
 The local sample-weighted group `acc 0.3718` and the public unweighted task mean `0.397`
@@ -196,9 +227,14 @@ Check whether public row used the instruct variant, base variant, an API-served 
 
 ### 4. Multiple-choice scoring may differ
 
-Current lm-eval MCQ tasks use loglikelihood scoring over choices.
+Current default lm-eval MCQ tasks use loglikelihood scoring over choices.
 
-Official stack may use generated answer selection or a different answer-label prompt. This can strongly affect instruction-tuned models.
+The official stack (`gsma-evals/src/evals/<task>/*.py`, verified) uses constrained
+`multiple_choice(cot=False)` + `choice()` decoding with `target=chr(65+answer)` exact match —
+neither loglikelihood nor free generation. The non-default `*_mcgen` tasks approximate this
+with free single-letter `generate_until`, which is itself a third engine. This MC engine axis
+is the largest unaligned axis (see the `*_gsma` profile section above and
+`GSMA_SCORING_CONTRACT.md`). It can strongly affect instruction-tuned models.
 
 ### 5. Chat template effects
 
@@ -289,6 +325,18 @@ After implementing the comparison script:
 python scripts/compare_gsma_leaderboard.py \
   --model gemma3-4b \
   --local-result <path-to-local-result-json>
+```
+
+For a GSMA-aligned (`*_gsma` / `*_mcgen`) result, add `--profile gsma` so the public columns
+map to the aligned tasks and the output leads with the per-task delta table plus the
+MC-engine-unaligned caveat:
+
+```bash
+python scripts/compare_gsma_leaderboard.py \
+  --profile gsma \
+  --model gemma3-4b \
+  --local-result <path-to-gsma-result-json> \
+  --out-md results/<...>-gsma-delta.md
 ```
 
 ### Step 5. Diagnose per task

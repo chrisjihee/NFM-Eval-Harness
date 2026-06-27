@@ -1,6 +1,6 @@
 # Progress
 
-마지막 갱신: 2026-06-26
+마지막 갱신: 2026-06-27
 
 ## 현재 상태
 
@@ -55,6 +55,31 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 - **생성형 저점수는 truncation 아님**: `MAX_LENGTH` 2048→8192로 truncation 0건이어도 점수 불변.
 - `hf`↔`vllm` parity OK. 비교 모델 `Qwen/Qwen2.5-7B-Instruct` baseline 확보.
 - 산출물: `outputs/gemma3-4b-leaderboard-delta.md`, `results/otlite-*-{2,maxlen8192,vllm-3}`, `results/otlite-qwen2.5-7b-hf-1`.
+
+## 2026-06-27 GSMA 공식 코드 정렬 pass (진행 중)
+
+계획: `.omc/plans/gsma-alignment-consensus-plan.md`, spec: `.omc/specs/gsma-alignment-2026-06.md`.
+원칙: lm-eval 유지, additive only, default scoring 동결, "공식 GSMA 완전 재현" 미주장
+(= public 코드 정렬 시도). 공식 contract는 `gsma-evals/src/evals/*` 소스 1:1 대조.
+
+완료(코드, GPU 불필요):
+- 신규 비-default 그룹 `open_telco_otlite_gsma` / `open_telco_otfull_gsma`(unweighted,
+  `weight_by_size: false`) + 7-task 구성: MC 4종 `*_mcgen`(teletables 포함) + 생성형 3종 `*_gsma`.
+- 신규 utils 함수/상수(append-only, ot-full에 importlib 재노출): `extract_boxed_last`,
+  `extract_first_int`, `extract_wg_token`(default first-match), `process_results_{telemath,telelogs,3gpp}_gsma`,
+  `doc_to_text_*_gsma`(+ `*_hinted` collapse 대체), `BOXED_NESTED_RE`/`WG_GSMA_RE`/`WS_COLLAPSE_RE`/`DIGIT_GSMA_RE`.
+  scorer는 공식 소스와 동일(telemath isclose 0.01+exact fallback / telelogs soft 첫 정수 / 3gpp WG regex ignorecase first-match).
+- `compare_gsma_leaderboard.py`에 `--profile gsma`(per-task delta 표 먼저 + 라벨링된 unweighted mean + MC engine 미정렬 caveat).
+
+완료(문서, 이번 항목):
+- 신규 `GSMA_SCORING_CONTRACT.md`(per-task 공식 contract 표 + scorer-aligned vs engine-different split
+  + MC engine 미정렬이 지배 동인 + boxed/WG collapse risk + max_gen_toks 의도 + sixg_bench note).
+- `TASK_MANIFEST.md`/`REPRODUCTION_NOTES.md`/`CLAUDE.md`/`HANDOFF.md` 갱신(신규 그룹/프로파일 사용법·run 명령·collapse gate 절차·미주장 원칙).
+
+진행 예정(GPU, 사용자 승인 후):
+- pytest(`tests/test_gsma_parsers.py`) → `make smoke` → ot-lite_gsma smoke(LIMIT=20) **HARD gate**
+  (drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율 + 3gpp first/last confirmation) → 승인 →
+  ot-lite_gsma full(gemma, hf) → compare(`--profile gsma`) → ot-full_gsma full(gemma, vLLM).
 
 ## 다음 작업
 

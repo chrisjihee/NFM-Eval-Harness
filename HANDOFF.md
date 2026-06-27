@@ -1,6 +1,6 @@
 # NFM-Eval-Harness 핸드오프 문서
 
-> 작성일: 2026-06-26
+> 작성일: 2026-06-27
 > 목적: 이 저장소(`NFM-Eval-Harness`)를 이어받아 작업하는 Claude Code가 프로젝트의 전체 맥락,
 > 현재 구현 수준, 확정된 진단, 그리고 무엇을 마무리해야 하는지를 한 번에 파악하기 위한 문서.
 > 이 문서는 배경·상태 전달용이다. 실제 작업 규칙·우선순위는 `CLAUDE.md`, agent 작업 규칙은 `AGENTS.md`를 따른다.
@@ -178,6 +178,23 @@ open_telco_full_3gpp_tsg
   **importlib로 재노출**한다(`exec_module` 후 비-underscore 이름 전체를 globals로 복사). 그 결과
   **ot-lite parser 변경이 ot-full에 동시에 상속된다.** 단일 commit이 두 트랙을 동시에 바꾸며 "독립 revert"가 불가능하다.
   parser/utils 관련 모든 변경 commit 메시지에는 "affects both tracks via importlib re-export"를 명기한다.
+
+**(4) `open_telco_{otlite,otfull}_gsma`** — 비-default GSMA 정렬 프로파일(2026-06-27 추가):
+```text
+open_telco_teleqna_mcgen      # MC, 자유 single-letter gen (engine 미정렬)
+open_telco_oranbench_mcgen    # MC
+open_telco_srsranbench_mcgen  # MC
+open_telco_teletables_mcgen   # MC, 표 미주입
+open_telco_telemath_gsma      # generate_until, until:[], max_gen_toks:256
+open_telco_telelogs_gsma      # generate_until, collapse gate 대상
+open_telco_3gpp_tsg_gsma      # generate_until, first-match WG regex, collapse gate 대상
+```
+- 집계: **unweighted**(`weight_by_size: false` 명시 override; lm-eval fork default True를 끔).
+- scorer만 공식 `gsma-evals/src/evals/*` 소스와 정렬(scorer-aligned), **engine은 다름**(engine-different).
+  특히 MC 4종의 자유 생성 vs 공식 제약 디코딩(`multiple_choice(cot=False)`)이 **가장 큰 미정렬 축이자
+  지배적 후보 격차 동인**이다. `*_mcgen` delta는 generation-vs-constrained-decoding sensitivity 측정일 뿐 재현 아님.
+- **"공식 GSMA 완전 재현"을 주장하지 않는다**(= public 코드 정렬 시도). 전체 contract와 출처 인용은
+  `GSMA_SCORING_CONTRACT.md` 참조. utils 신규 함수/상수도 importlib 재노출로 ot-full에 자동 반영된다.
 
 #### task별 `metadata.version` (drift 정정)
 "ot-lite 7-task v0.2"로 일괄 기술하던 것은 부정확하다. 실제 version은 task마다 다르다.
@@ -358,6 +375,36 @@ open_telco_full_3gpp_tsg
   4.5a ot-full sample count dry pass → 4.5b ot-full 최초 full run(critical) → 4.6 vLLM↔HF parity(cuda-compat 캡처 + hf fallback) →
   4.7 Qwen2.5-7B baseline → 4.8 수정 효과 after 재측정(단일 변경별 before/after delta).
   ot-full/parity/Qwen은 **재현성/smoke 목적으로 1차 진행**하고, public과의 **attribution 해석만** variant pin 성공에 조건부.
+
+### 9.1 GSMA 정렬 프로파일 사용법 (2026-06-27 pass)
+
+신규 그룹은 `--include_path open_telco_lm_eval/tasks`로 자동 발견되므로 run 스크립트 무수정,
+`TASKS=`/`OUTPUT_PATH=`만 바꾼다. 상세 contract는 `GSMA_SCORING_CONTRACT.md`.
+
+```bash
+# 1) ot-lite_gsma smoke (HARD gate): drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma DEVICE=cuda:0 LIMIT=20 \
+  OUTPUT_PATH=results/open_telco_otlite_gsma_smoke ./run_open_telco_otlite.sh
+# 2) 게이트 통과 후 full
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma CONFIRM_FULL_RUN=1 \
+  OUTPUT_PATH=results/open_telco_otlite_gsma ./run_open_telco_otlite.sh
+# 3) compare (per-task delta 먼저 + 라벨링된 unweighted mean + MC engine 미정렬 caveat)
+python scripts/compare_gsma_leaderboard.py --profile gsma --model gemma3-4b \
+  --local-result <ot-lite_gsma .json> --out-md results/<...>-gsma-delta.md
+# 4) ot-full_gsma full (vLLM; 게이트 통과 + 사용자 승인 시에만)
+BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otfull_gsma \
+  CONFIRM_FULL_RUN=1 OUTPUT_PATH=results/open_telco_otfull_gsma ./run_open_telco_otfull.sh
+```
+
+**collapse gate 절차**: ot-lite_gsma smoke(LIMIT=20)에서 telemath/telelogs `\boxed{}` 출력률,
+3gpp WG-token 매치율을 측정한다. 어느 하나라도 **< 0.30**이면 full ot-full_gsma run을 BLOCK하고,
+해당 task를 `*_gsma_hinted`(+1-line gold-free 출력형식 지시) 변형으로 재측정해 emission-rate 회복 시에만
+사용자 승인하에 비교군으로 진행한다. 공식 soft scorer는 boxed/WG token 미출력 시 무조건 INCORRECT이므로
+raw prompt + 약/base 모델에서 점수가 collapse(~0)할 수 있다(원인·출처: `GSMA_SCORING_CONTRACT.md` §2.3).
+
+> 원칙 재확인: `*_gsma` / `*_mcgen`는 **공식 코드(scorer) 정렬 시도**이지 runtime/provider/revision 동일
+> 보장이 아니다. **"공식 GSMA 완전 재현" 주장 금지.** unweighted mean은 leaderboard 관례일 뿐
+> 공식 `run_evals.py`가 계산하지 않는다.
 
 ---
 
