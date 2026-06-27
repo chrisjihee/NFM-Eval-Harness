@@ -31,10 +31,16 @@ if ! python -c "import lm_eval" >/dev/null 2>&1; then
   exit 3
 fi
 
-# Default targets: the three group tasks. Override by passing task/group names.
+# Default targets: GSMA-compatible groups (primary) + legacy baseline + mcgen
+# diagnostics. Override by passing task/group names.
 TARGETS=("$@")
 if [[ ${#TARGETS[@]} -eq 0 ]]; then
-  TARGETS=(open_telco_otlite open_telco_otlite_core4 open_telco_otfull)
+  TARGETS=(
+    open_telco_otlite_gsma open_telco_otfull_gsma
+    open_telco_otlite_lm_eval_baseline open_telco_otfull_lm_eval_baseline
+    open_telco_otlite_core4_lm_eval_baseline
+    open_telco_otlite_mcgen open_telco_otfull_mcgen
+  )
 fi
 
 TASKS_DIR="${ROOT_DIR}/open_telco_lm_eval/tasks"
