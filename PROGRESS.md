@@ -76,10 +76,13 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
   + MC engine 미정렬이 지배 동인 + boxed/WG collapse risk + max_gen_toks 의도 + sixg_bench note).
 - `TASK_MANIFEST.md`/`REPRODUCTION_NOTES.md`/`CLAUDE.md`/`HANDOFF.md` 갱신(신규 그룹/프로파일 사용법·run 명령·collapse gate 절차·미주장 원칙).
 
-진행 예정(GPU, 사용자 승인 후):
-- pytest(`tests/test_gsma_parsers.py`) → `make smoke` → ot-lite_gsma smoke(LIMIT=20) **HARD gate**
-  (drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율 + 3gpp first/last confirmation) → 승인 →
-  ot-lite_gsma full(gemma, hf) → compare(`--profile gsma`) → ot-full_gsma full(gemma, vLLM).
+완료(GPU run, gemma-3-4b-it, vLLM):
+- collapse gate 통과: telemath `max_gen_toks` 256→1024로 boxed-rate 0.00→0.80 회복(commit).
+- **`open_telco_otlite_gsma` unweighted `0.3992` ≈ public `0.397` (+0.0022)**.
+- **`open_telco_otfull_gsma`(public 동일 split, 대규모 N) unweighted `0.3926` ≈ public `0.397` (−0.0044)**.
+- telelogs: ot-lite raw collapse(0.090) / `_gsma_hinted` 0.13 / ot-full faithful 0.118 ≈ public 0.117(대규모에선 collapse 없음).
+- 결론: ~−13.8%p 후보 격차의 거의 전부가 **scoring 방식 + 집계 차이**(ot-lite·ot-full 일관). "공식 재현" 아님(engine 미정렬).
+- 산출물: `outputs/gemma3-4b-{otlite,otfull}-gsma-delta.md`, `results/open_telco_{otlite,otfull}_gsma/`, `results/telelogs_gsma_hinted/`.
 
 ## 다음 작업
 

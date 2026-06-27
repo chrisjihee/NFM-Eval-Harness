@@ -10,7 +10,7 @@ scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco
 - per-task delta 전부 ±0.04 내: teleqna 0.661/oran 0.673/srsran 0.780/teletables 0.250/telemath 0.100/telelogs 0.090(faithful)/3gpp 0.240.
 - telelogs: raw GSMA contract에서 4B가 라벨 미출력 → faithful 0.090(collapse), `_gsma_hinted`(+1줄 형식 지시) `0.13` ≈ public 0.117. 격차는 prompt-format.
 - **무결성**: "공식 재현" 주장 아님. MC engine(자유 gen vs 공식 제약 디코딩)이 최대 미정렬 축. 비교표 `outputs/gemma3-4b-otlite-gsma-delta.md`, contract `GSMA_SCORING_CONTRACT.md`.
-- ot-full_gsma(public 동일 split) 실행 중/예정.
+- **ot-full_gsma (public 동일 split, 대규모 N) 완료**: unweighted `0.3926` ≈ public `0.397` (−0.0044). telelogs faithful `0.118` ≈ public `0.117`(대규모/1024budget에서 collapse 없음). 비교표 `outputs/gemma3-4b-otfull-gsma-delta.md`. → ot-lite·ot-full 양쪽에서 일관: ~−13.8%p 격차는 거의 전부 scoring+집계 차이.
 
 ## 2026-06-26 핵심 결과 (원인 격리)
 
