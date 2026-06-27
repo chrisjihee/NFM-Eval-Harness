@@ -16,6 +16,16 @@ aggregate views that are NOT the same thing:
 * local unweighted task mean -- the simple mean of the 7 task accuracies. This is the
   apples-to-apples comparison against the public average, which is itself an unweighted mean.
 
+Two profiles are available via ``--profile``:
+
+* ``default`` (the default) maps public columns to the frozen multiple_choice / generate
+  tasks. Output is byte-identical to prior behavior.
+* ``gsma`` (non-default) maps public columns to the additive ``*_mcgen`` / ``*_gsma``
+  tasks, emits the per-task delta table FIRST, labels the single average as a
+  leaderboard convention NOT computed by official GSMA code, and annotates the 4 MC
+  rows whose generation engine is UNALIGNED with the official constrained decoding.
+  This is a generation-vs-constrained-decoding sensitivity view, NOT a reproduction.
+
 Usage examples
 --------------
 
@@ -92,9 +102,46 @@ MAPPING_OT_FULL: dict[str, str] = {
     "three_gpp": "open_telco_full_3gpp_tsg",
 }
 
+# GSMA-aligned (non-default) profile mappings. These point at the additive
+# *_mcgen (generation-based MC) and *_gsma (generation scorer) local tasks
+# instead of the frozen default multiple_choice / generate tasks. The MC rows
+# (teleqna/teletables/oranbench/srsranbench) use a generation engine that is
+# UNALIGNED with the official constrained-decoding multiple_choice path; the
+# *_gsma generation rows mirror the gsma-evals scorer rules but run on a
+# different generation engine (lm-eval vs Inspect). See CAVEAT_TEXT_GSMA.
+MAPPING_OT_LITE_GSMA: dict[str, str] = {
+    "teleqna": "open_telco_teleqna_mcgen",
+    "teletables": "open_telco_teletables_mcgen",
+    "oranbench": "open_telco_oranbench_mcgen",
+    "srsranbench": "open_telco_srsranbench_mcgen",
+    "telemath": "open_telco_telemath_gsma",
+    "telelogs": "open_telco_telelogs_gsma",
+    "three_gpp": "open_telco_3gpp_tsg_gsma",
+}
+
+MAPPING_OT_FULL_GSMA: dict[str, str] = {
+    "teleqna": "open_telco_full_teleqna_mcgen",
+    "teletables": "open_telco_full_teletables_mcgen",
+    "oranbench": "open_telco_full_oranbench_mcgen",
+    "srsranbench": "open_telco_full_srsranbench_mcgen",
+    "telemath": "open_telco_full_telemath_gsma",
+    "telelogs": "open_telco_full_telelogs_gsma",
+    "three_gpp": "open_telco_full_3gpp_tsg_gsma",
+}
+
+# Public columns whose GSMA-profile local tasks use the UNALIGNED free-generation
+# MC engine (vs the official constrained-decoding multiple_choice path).
+MC_ENGINE_UNALIGNED_COLUMNS = frozenset(
+    {"teleqna", "teletables", "oranbench", "srsranbench"}
+)
+
 # Group names that hold the sample-weighted aggregate in the result JSON, by track.
 GROUP_NAME_OT_LITE = "open_telco_otlite"
 GROUP_NAME_OT_FULL = "open_telco_otfull"
+
+# Non-default GSMA-aligned group names (unweighted task mean).
+GROUP_NAME_OT_LITE_GSMA = "open_telco_otlite_gsma"
+GROUP_NAME_OT_FULL_GSMA = "open_telco_otfull_gsma"
 
 PRIMARY_METRIC = "acc,none"
 
@@ -118,6 +165,21 @@ CAVEAT_TEXT = (
     "UNKNOWN, so each delta is a candidate gap, not a definitive conclusion.\n"
     "- ot-lite uses a different split from ot-full / the public leaderboard; be "
     "careful comparing ot-lite directly against leaderboard numbers."
+)
+
+CAVEAT_TEXT_GSMA = (
+    "CAVEAT (gsma profile):\n"
+    "- For the 4 MC tasks (teleqna/teletables/oranbench/srsranbench) the engine -- "
+    "official multiple_choice(cot=False)+choice() constrained decoding vs lm-eval "
+    "generate_until + until:[\\n] + max_gen_toks:8 free single-letter generation -- "
+    "is the LARGEST UNALIGNED axis and the dominant candidate-gap driver; the MC "
+    "delta primarily measures generation-vs-constrained-decoding sensitivity, NEVER "
+    "official reproduction.\n"
+    "- The *_gsma generation scorer rules mirror the gsma-evals source, but the "
+    "generation engine differs (lm-eval generate vs Inspect generate).\n"
+    "- The GSMA repo computes no cross-task average; the single unweighted task mean "
+    "below is a leaderboard convention only, NOT computed by official GSMA code.\n"
+    "- No production runtime / provider / model-revision parity is claimed."
 )
 
 
@@ -149,22 +211,31 @@ def detect_track(local: dict[str, Any]) -> str:
     """Detect 'ot-full' or 'ot-lite' from the result JSON task names.
 
     Returns 'ot-full' if any full-track task/group is present, else 'ot-lite'.
+    Recognizes both default and GSMA-profile (``*_mcgen`` / ``*_gsma``) task
+    names; any ot-full task name (including ``open_telco_full_*_gsma``) starts
+    with ``open_telco_full_``, so the prefix check already covers them.
     """
     results = local.get("results", {})
     groups = local.get("groups", {})
     names = set(results.keys()) | set(groups.keys())
     if any(name.startswith("open_telco_full_") for name in names):
         return "ot-full"
-    if GROUP_NAME_OT_FULL in names:
+    if GROUP_NAME_OT_FULL in names or GROUP_NAME_OT_FULL_GSMA in names:
         return "ot-full"
     return "ot-lite"
 
 
-def get_mapping(track: str) -> dict[str, str]:
+def get_mapping(track: str, profile: str = "default") -> dict[str, str]:
+    if profile == "gsma":
+        return MAPPING_OT_FULL_GSMA if track == "ot-full" else MAPPING_OT_LITE_GSMA
     return MAPPING_OT_FULL if track == "ot-full" else MAPPING_OT_LITE
 
 
-def get_group_name(track: str) -> str:
+def get_group_name(track: str, profile: str = "default") -> str:
+    if profile == "gsma":
+        return (
+            GROUP_NAME_OT_FULL_GSMA if track == "ot-full" else GROUP_NAME_OT_LITE_GSMA
+        )
     return GROUP_NAME_OT_FULL if track == "ot-full" else GROUP_NAME_OT_LITE
 
 
@@ -568,6 +639,142 @@ def render_stdout(
     return "\n".join(lines)
 
 
+# Per-row annotation appended to the MC rows in the GSMA profile output.
+MC_ROW_ANNOTATION = (
+    "engine UNALIGNED (free gen vs constrained decode); dominant candidate-gap "
+    "driver; measures gen-vs-constrained sensitivity"
+)
+
+
+def render_stdout_gsma(
+    track: str,
+    model: str,
+    public_source: str,
+    table: list[dict[str, Any]],
+    aggregates: dict[str, Optional[float]],
+) -> str:
+    """GSMA-profile stdout: per-task delta table FIRST, then a single labeled mean.
+
+    The per-task delta table is emitted before any aggregate, MC rows carry an
+    explicit engine-unaligned annotation, and the single average is labeled as a
+    leaderboard convention not computed by official GSMA code.
+    """
+    lines: list[str] = []
+    lines.append(f"GSMA leaderboard comparison (gsma profile): {model}")
+    lines.append(f"  track detected : {track}")
+    lines.append(f"  public source  : {public_source}")
+    lines.append(f"  primary metric : {PRIMARY_METRIC}")
+    lines.append("")
+
+    lines.append("Per-task deltas:")
+    header = f"{'public_column':<16} {'local_task':<32} {'public':>9} {'local':>9} {'delta':>10}"
+    lines.append(header)
+    lines.append("-" * len(header))
+    for r in table:
+        lines.append(
+            f"{r['public_column']:<16} {r['local_task']:<32} "
+            f"{_fmt(r['public']):>9} {_fmt(r['local']):>9} {_fmt_signed(r['delta']):>10}"
+        )
+        if r["public_column"] in MC_ENGINE_UNALIGNED_COLUMNS:
+            lines.append(f"  ^ {MC_ROW_ANNOTATION}")
+    lines.append("")
+
+    lines.append(
+        "leaderboard-convention unweighted mean -- NOT computed by official GSMA code:"
+    )
+    lines.append(
+        f"  local unweighted task mean                   : "
+        f"{_fmt(aggregates['local_unweighted_mean'])}"
+    )
+    lines.append(
+        f"  public unweighted mean (computed from tasks) : "
+        f"{_fmt(aggregates['public_unweighted_mean_computed'])}"
+    )
+    lines.append(
+        f"  public average (reported)                    : "
+        f"{_fmt(aggregates['public_average_reported'])}"
+    )
+    lines.append(
+        f"  delta unweighted (local mean - public mean)  : "
+        f"{_fmt_signed(aggregates['delta_unweighted'])}"
+    )
+    lines.append(
+        f"  local group acc (sample-weighted)            : "
+        f"{_fmt(aggregates['local_group_acc_weighted'])}"
+    )
+    lines.append("")
+    lines.append(CAVEAT_TEXT_GSMA)
+    return "\n".join(lines)
+
+
+def render_markdown_gsma(
+    track: str,
+    model: str,
+    public_source: str,
+    table: list[dict[str, Any]],
+    aggregates: dict[str, Optional[float]],
+) -> str:
+    """GSMA-profile Markdown: per-task delta table first, then the labeled mean."""
+    lines: list[str] = []
+    lines.append(f"# GSMA leaderboard comparison (gsma profile): {model}")
+    lines.append("")
+    lines.append(f"- Track detected: `{track}`")
+    lines.append(f"- Public source: {public_source}")
+    lines.append(f"- Primary metric: `{PRIMARY_METRIC}`")
+    lines.append("")
+    lines.append("## Per-task deltas")
+    lines.append("")
+    lines.append(
+        "| Public column | Local task | Public | Local | Delta (local-public) | Note |"
+    )
+    lines.append("|---|---|---:|---:|---:|---|")
+    for r in table:
+        note = (
+            MC_ROW_ANNOTATION
+            if r["public_column"] in MC_ENGINE_UNALIGNED_COLUMNS
+            else ""
+        )
+        lines.append(
+            f"| `{r['public_column']}` | `{r['local_task']}` | "
+            f"{_fmt(r['public'])} | {_fmt(r['local'])} | {_fmt_signed(r['delta'])} | "
+            f"{note} |"
+        )
+    lines.append("")
+    lines.append(
+        "## Leaderboard-convention unweighted mean (NOT computed by official GSMA code)"
+    )
+    lines.append("")
+    lines.append("| Aggregate | Value |")
+    lines.append("|---|---:|")
+    lines.append(
+        f"| local unweighted task mean | "
+        f"{_fmt(aggregates['local_unweighted_mean'])} |"
+    )
+    lines.append(
+        f"| public unweighted mean (computed from tasks) | "
+        f"{_fmt(aggregates['public_unweighted_mean_computed'])} |"
+    )
+    lines.append(
+        f"| public average (reported) | "
+        f"{_fmt(aggregates['public_average_reported'])} |"
+    )
+    lines.append(
+        f"| delta unweighted (local mean - public computed mean) | "
+        f"{_fmt_signed(aggregates['delta_unweighted'])} |"
+    )
+    lines.append(
+        f"| local group acc (sample-weighted) | "
+        f"{_fmt(aggregates['local_group_acc_weighted'])} |"
+    )
+    lines.append("")
+    lines.append("## Caveat")
+    lines.append("")
+    for line in CAVEAT_TEXT_GSMA.splitlines():
+        lines.append(line)
+    lines.append("")
+    return "\n".join(lines)
+
+
 def write_csv(
     path: Path,
     table: list[dict[str, Any]],
@@ -646,6 +853,18 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Force the track instead of auto-detecting from task names.",
     )
     parser.add_argument(
+        "--profile",
+        choices=["default", "gsma"],
+        default="default",
+        help=(
+            "Mapping/output profile. 'default' (the default) maps public columns "
+            "to the frozen multiple_choice/generate tasks and is byte-identical to "
+            "prior behavior. 'gsma' maps to the non-default *_mcgen / *_gsma tasks, "
+            "emits the per-task delta table first, labels the single mean as a "
+            "leaderboard convention, and annotates the unaligned MC rows."
+        ),
+    )
+    parser.add_argument(
         "--out-md",
         type=Path,
         default=None,
@@ -666,9 +885,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         local = load_local_result(args.local_result)
 
         track = detect_track(local) if args.track == "auto" else args.track
-        mapping = dict(get_mapping(track))
+        mapping = dict(get_mapping(track, args.profile))
         mapping.update(parse_mapping_overrides(args.map_overrides))
-        group_name = get_group_name(track)
+        group_name = get_group_name(track, args.profile)
 
         local_scores = extract_local_scores(local, mapping)
         local_group_acc = extract_local_group_acc(local, group_name)
@@ -687,15 +906,25 @@ def main(argv: Optional[list[str]] = None) -> int:
         table = build_table(mapping, public_scores, local_scores)
         aggregates = compute_aggregates(table, public_average, local_group_acc)
 
-        stdout_text = render_stdout(
-            track, args.model, public_source, table, aggregates
-        )
+        if args.profile == "gsma":
+            stdout_text = render_stdout_gsma(
+                track, args.model, public_source, table, aggregates
+            )
+        else:
+            stdout_text = render_stdout(
+                track, args.model, public_source, table, aggregates
+            )
         print(stdout_text)
 
         if args.out_md is not None:
-            md_text = render_markdown(
-                track, args.model, public_source, table, aggregates
-            )
+            if args.profile == "gsma":
+                md_text = render_markdown_gsma(
+                    track, args.model, public_source, table, aggregates
+                )
+            else:
+                md_text = render_markdown(
+                    track, args.model, public_source, table, aggregates
+                )
             args.out_md.parent.mkdir(parents=True, exist_ok=True)
             args.out_md.write_text(md_text, encoding="utf-8")
             _eprint(f"Wrote Markdown: {args.out_md}")
