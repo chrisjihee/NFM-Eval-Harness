@@ -176,6 +176,7 @@ data-*
 package-src
 *-src
 lm-evaluation-harness
+gsma-evals
 
 # output
 version-vllm-check.log
