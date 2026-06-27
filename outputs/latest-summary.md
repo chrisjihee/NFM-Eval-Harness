@@ -1,8 +1,18 @@
 # Latest Result Summary
 
-마지막 갱신: 2026-06-26
+마지막 갱신: 2026-06-27
 
-## 이번 pass 핵심 결과 (원인 격리)
+## 2026-06-27 GSMA-aligned 프로파일 결과 (가장 중요)
+
+scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco_otlite_gsma`(unweighted)로 gemma-3-4b-it 실행:
+
+- **unweighted 평균 `0.3992` ≈ public gemma3-4b `0.397` (delta +0.0022)**. 기존 ~−13.8%p 후보 격차의 거의 전부가 **scoring 방식(loglikelihood→generation) + 집계(sample-weighted→unweighted)** 로 설명됨.
+- per-task delta 전부 ±0.04 내: teleqna 0.661/oran 0.673/srsran 0.780/teletables 0.250/telemath 0.100/telelogs 0.090(faithful)/3gpp 0.240.
+- telelogs: raw GSMA contract에서 4B가 라벨 미출력 → faithful 0.090(collapse), `_gsma_hinted`(+1줄 형식 지시) `0.13` ≈ public 0.117. 격차는 prompt-format.
+- **무결성**: "공식 재현" 주장 아님. MC engine(자유 gen vs 공식 제약 디코딩)이 최대 미정렬 축. 비교표 `outputs/gemma3-4b-otlite-gsma-delta.md`, contract `GSMA_SCORING_CONTRACT.md`.
+- ot-full_gsma(public 동일 split) 실행 중/예정.
+
+## 2026-06-26 핵심 결과 (원인 격리)
 
 1. **MC 격차의 지배적 원인 = scoring 방식.** 객관식을 generation 후 답 추출(`*_mcgen`, 비-default 실험)로
    바꾸면 점수가 public에 거의 일치 — gemma·Qwen **두 모델에서 재현**.

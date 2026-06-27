@@ -183,6 +183,7 @@ outputs/*
 !outputs/latest-summary.md
 !outputs/run-index.jsonl
 !outputs/*-leaderboard-delta.md
+!outputs/*-gsma-delta.md
 outputs-*/
 
 # eval results: keep curated baseline evidence (results_*.json + results_*.md) tracked,
