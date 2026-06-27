@@ -25,6 +25,12 @@
 | 2026-06-27 | `otlite-gsma-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otlite_gsma` | `0.3992 acc` (unweighted) | **GSMA-aligned scorer. unweighted ≈ public 0.397 (+0.002).** |
 | 2026-06-27 | `telelogs-gsma-hinted-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_telelogs_gsma_hinted` | `0.13 acc` | telelogs raw collapse(0.090) → format-hint 회복 ≈ public 0.117. |
 | 2026-06-27 | `otfull-gsma-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otfull_gsma` | `0.3926 acc` (unweighted) | **public 동일 split·대규모 N에서 ≈ public 0.397 (−0.004).** telelogs faithful 0.118≈0.117. |
+| 2026-06-27 | `otlite-gsma-qwen2.5-7b-vllm` | `Qwen/Qwen2.5-7B-Instruct` | `vllm` | `open_telco_otlite_gsma` | `0.4544` (unweighted) | **delivery LB.** ≈ public 0.4579 (−0.0035), 근접재현. |
+| 2026-06-27 | `otlite-gsma-falcon3-10b-vllm` | `tiiuae/Falcon3-10B-Instruct` | `vllm` | `open_telco_otlite_gsma` | `0.4791` (unweighted) | **delivery LB.** vs public 0.4588 (+0.0203). |
+| 2026-06-27 | `otlite-gsma-gemma3-12b-vllm` | `google/gemma-3-12b-it` | `vllm` | `open_telco_otlite_gsma` | `0.4277` (unweighted) | **delivery LB.** vs public 0.4638 (−0.0362); `MAX_MODEL_LEN=8192`(128K KV>40GB); telemath 0.04 emission. |
+| 2026-06-27 | `otlite-gsma-qwen3-4b-vllm` | `Qwen/Qwen3-4B` | `vllm` | `open_telco_otlite_gsma` | `0.4463` (unweighted) | **delivery 내부.** `enable_thinking=False`, 응답 `<think>` 0/1700. |
+| 2026-06-27 | `otlite-gsma-qwen3-14b-vllm` | `Qwen/Qwen3-14B` | `vllm`(tp=2) | `open_telco_otlite_gsma` | `0.4678` (unweighted) | **delivery 내부.** think-OFF 0/1700. telelogs 0.0=`\boxed{}` 미출력(emission 0.01). |
+| 2026-06-27 | `otlite-gsma-deepseek-r1-distill-14b-vllm` | `deepseek-ai/DeepSeek-R1-Distill-Qwen-14B` | `vllm`(tp=2) | `open_telco_otlite_gsma` | `0.0514` (unweighted) ⚠ | **delivery 내부.** MC 붕괴=artifact: reasoning 모델이 `enable_thinking=False` 무시→MC max_gen_toks:8에 추론 산문 truncate. 능력치 아님. |
 
 ## 2026-05-15: Gemma 3 4B IT On ot-lite
 
