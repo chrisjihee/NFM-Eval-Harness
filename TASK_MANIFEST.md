@@ -4,39 +4,72 @@ Last updated: 2026-06-27
 
 This manifest describes the current LM-Evaluation-Harness task packs implemented in this repository.
 
+## Naming policy (read first)
+
+Task/group names follow a single consistent convention:
+
+- **Default / recommended GSMA-compatible**: `open_telco_otlite_gsma` /
+  `open_telco_otfull_gsma` (the run-script defaults). These are the only
+  leaderboard-comparable groups. Their members are the additive `*_mcgen` (MC) and
+  `*_gsma` (generation) tasks.
+- **Legacy lm-eval baseline (preserved, NOT deleted)**: every former bare group and
+  task now carries an `_lm_eval_baseline` postfix and is **diagnostic only — do not
+  compare against the public leaderboard**. Examples: `open_telco_otlite` →
+  `open_telco_otlite_lm_eval_baseline`, `open_telco_otfull` →
+  `open_telco_otfull_lm_eval_baseline`, `open_telco_otlite_core4` →
+  `open_telco_otlite_core4_lm_eval_baseline`, `open_telco_teleqna` →
+  `open_telco_teleqna_lm_eval_baseline`, `open_telco_3gpp_tsg` /
+  `open_telco_3gpp_tsg_gen` → `*_lm_eval_baseline`, `open_telco_full_*` →
+  `open_telco_full_*_lm_eval_baseline`.
+- **Bare `open_telco_otlite` / `open_telco_otfull` are non-runnable** (the run scripts
+  fail-fast with `exit 2`); pick `_gsma` (recommended) or `_lm_eval_baseline` (legacy)
+  explicitly.
+- `*_mcgen` is an MC scoring-sensitivity diagnostic and is unchanged by this rename.
+- This repository does **not** claim "official full reproduction" of the GSMA stack.
+- **Historical preservation**: past run numbers/paths are kept under their historical
+  pre-rename names; do not retroactively rename historical results.
+
 ## Public leaderboard mapping
 
-The public `GSMA/leaderboard` dataset has 7 benchmark columns:
+The public `GSMA/leaderboard` dataset has 7 benchmark columns. The **recommended**
+mapping is the default `_gsma` profile (`*_mcgen` / `*_gsma` tasks); the legacy
+`_lm_eval_baseline` mapping is **diagnostic only and not leaderboard-comparable**.
 
-| Public column | Local ot-lite task | Local ot-full task |
-|---|---|---|
-| `teleqna` | `open_telco_teleqna` | `open_telco_full_teleqna` |
-| `teletables` | `open_telco_teletables` | `open_telco_full_teletables` |
-| `oranbench` | `open_telco_oranbench` | `open_telco_full_oranbench` |
-| `srsranbench` | `open_telco_srsranbench` | `open_telco_full_srsranbench` |
-| `telemath` | `open_telco_telemath` | `open_telco_full_telemath` |
-| `telelogs` | `open_telco_telelogs` | `open_telco_full_telelogs` |
-| `three_gpp` | `open_telco_3gpp_tsg_gen` | `open_telco_full_3gpp_tsg` |
+| Public column | Recommended ot-lite (`_gsma`) | Recommended ot-full (`_gsma`) | Legacy ot-lite (`_lm_eval_baseline`, diagnostic) | Legacy ot-full (`_lm_eval_baseline`, diagnostic) |
+|---|---|---|---|---|
+| `teleqna` | `open_telco_teleqna_mcgen` | `open_telco_full_teleqna_mcgen` | `open_telco_teleqna_lm_eval_baseline` | `open_telco_full_teleqna_lm_eval_baseline` |
+| `teletables` | `open_telco_teletables_mcgen` | `open_telco_full_teletables_mcgen` | `open_telco_teletables_lm_eval_baseline` | `open_telco_full_teletables_lm_eval_baseline` |
+| `oranbench` | `open_telco_oranbench_mcgen` | `open_telco_full_oranbench_mcgen` | `open_telco_oranbench_lm_eval_baseline` | `open_telco_full_oranbench_lm_eval_baseline` |
+| `srsranbench` | `open_telco_srsranbench_mcgen` | `open_telco_full_srsranbench_mcgen` | `open_telco_srsranbench_lm_eval_baseline` | `open_telco_full_srsranbench_lm_eval_baseline` |
+| `telemath` | `open_telco_telemath_gsma` | `open_telco_full_telemath_gsma` | `open_telco_telemath_lm_eval_baseline` | `open_telco_full_telemath_lm_eval_baseline` |
+| `telelogs` | `open_telco_telelogs_gsma` | `open_telco_full_telelogs_gsma` | `open_telco_telelogs_lm_eval_baseline` | `open_telco_full_telelogs_lm_eval_baseline` |
+| `three_gpp` | `open_telco_3gpp_tsg_gsma` | `open_telco_full_3gpp_tsg_gsma` | `open_telco_3gpp_tsg_gen_lm_eval_baseline` | `open_telco_full_3gpp_tsg_lm_eval_baseline` |
 
-For the non-default GSMA-aligned profile, the public columns map to the `*_mcgen` /
-`*_gsma` tasks instead (see `compare_gsma_leaderboard.py --profile gsma` and
-`GSMA_SCORING_CONTRACT.md`): `teleqna→*_teleqna_mcgen`, `teletables→*_teletables_mcgen`,
-`oranbench→*_oranbench_mcgen`, `srsranbench→*_srsranbench_mcgen`, `telemath→*_telemath_gsma`,
-`telelogs→*_telelogs_gsma`, `three_gpp→*_3gpp_tsg_gsma`.
+The recommended `_gsma` mapping is selected by `compare_gsma_leaderboard.py --profile gsma`
+(see `GSMA_SCORING_CONTRACT.md`). The legacy `_lm_eval_baseline` mapping is the
+`--profile default` mapping and exists for diagnostics only — it must not be reported as
+a leaderboard comparison.
 
 ## Group tasks
 
-### `open_telco_otlite`
+### `open_telco_otlite_gsma` / `open_telco_otfull_gsma` (DEFAULT, recommended)
+
+These are the run-script defaults and the only leaderboard-comparable groups. They are
+documented in full in the "GSMA-aligned" subsection below.
+
+### `open_telco_otlite_lm_eval_baseline` (legacy, diagnostic only)
 
 Dataset: `GSMA/ot-lite`
 
-Purpose: quick 7-task leaderboard-style baseline.
+Purpose: preserved legacy lm-eval/loglikelihood 7-task baseline (former bare
+`open_telco_otlite`). **Diagnostic only — not leaderboard-comparable.** Use the
+recommended `open_telco_otlite_gsma` for leaderboard comparison.
 
 Group `metadata.version`: v0.2.
 
 Aggregation: **sample-weighted** mean of the 7 task `acc` values. The group YAML
-(`open_telco_otlite.yaml`) declares `aggregate_metric_list` with `aggregation: mean`
-but does not override `weight_by_size`, so the lm_eval fork default
+(`open_telco_otlite_lm_eval_baseline.yaml`) declares `aggregate_metric_list` with
+`aggregation: mean` but does not override `weight_by_size`, so the lm_eval fork default
 (`weight_by_size=True`) applies. This means the group `acc` is dominated by the
 high-sample-count tasks (notably `teleqna`, 1000 samples). The unweighted task-mean
 must be computed separately if equal per-task weighting is wanted.
@@ -44,20 +77,21 @@ must be computed separately if equal per-task weighting is wanted.
 Tasks:
 
 ```text
-open_telco_teleqna
-open_telco_teletables
-open_telco_oranbench
-open_telco_srsranbench
-open_telco_telemath
-open_telco_telelogs
-open_telco_3gpp_tsg_gen
+open_telco_teleqna_lm_eval_baseline
+open_telco_teletables_lm_eval_baseline
+open_telco_oranbench_lm_eval_baseline
+open_telco_srsranbench_lm_eval_baseline
+open_telco_telemath_lm_eval_baseline
+open_telco_telelogs_lm_eval_baseline
+open_telco_3gpp_tsg_gen_lm_eval_baseline
 ```
 
-### `open_telco_otlite_core4`
+### `open_telco_otlite_core4_lm_eval_baseline` (legacy, diagnostic only)
 
 Dataset: `GSMA/ot-lite`
 
-Purpose: legacy starter bundle from the first implementation pass.
+Purpose: legacy starter bundle from the first implementation pass (former
+`open_telco_otlite_core4`). **Diagnostic only — not leaderboard-comparable.**
 
 Group `metadata.version`: v0.1.
 
@@ -66,44 +100,48 @@ Aggregation: **sample-weighted** mean (`weight_by_size: true`, explicit in the g
 Tasks:
 
 ```text
-open_telco_teleqna
-open_telco_oranbench
-open_telco_srsranbench
-open_telco_3gpp_tsg
+open_telco_teleqna_lm_eval_baseline
+open_telco_oranbench_lm_eval_baseline
+open_telco_srsranbench_lm_eval_baseline
+open_telco_3gpp_tsg_lm_eval_baseline
 ```
 
-### `open_telco_otfull`
+### `open_telco_otfull_lm_eval_baseline` (legacy, diagnostic only)
 
 Dataset: `GSMA/ot-full`
 
-Purpose: 7-task leaderboard-oriented baseline.
+Purpose: preserved legacy lm-eval/loglikelihood 7-task baseline (former bare
+`open_telco_otfull`). **Diagnostic only — not leaderboard-comparable.** Use the
+recommended `open_telco_otfull_gsma` for leaderboard comparison.
 
 Group `metadata.version`: v0.2.
 
 Aggregation: **sample-weighted** mean of the 7 task `acc` values. As with
-`open_telco_otlite`, the group YAML (`open_telco_otfull.yaml`) does not override
-`weight_by_size`, so the lm_eval fork default (`weight_by_size=True`) applies.
+`open_telco_otlite_lm_eval_baseline`, the group YAML
+(`open_telco_otfull_lm_eval_baseline.yaml`) does not override `weight_by_size`, so the
+lm_eval fork default (`weight_by_size=True`) applies.
 
 Tasks:
 
 ```text
-open_telco_full_teleqna
-open_telco_full_teletables
-open_telco_full_oranbench
-open_telco_full_srsranbench
-open_telco_full_telemath
-open_telco_full_telelogs
-open_telco_full_3gpp_tsg
+open_telco_full_teleqna_lm_eval_baseline
+open_telco_full_teletables_lm_eval_baseline
+open_telco_full_oranbench_lm_eval_baseline
+open_telco_full_srsranbench_lm_eval_baseline
+open_telco_full_telemath_lm_eval_baseline
+open_telco_full_telelogs_lm_eval_baseline
+open_telco_full_3gpp_tsg_lm_eval_baseline
 ```
 
-### `open_telco_otlite_gsma` / `open_telco_otfull_gsma` (NON-DEFAULT, GSMA-aligned)
+### `open_telco_otlite_gsma` / `open_telco_otfull_gsma` (DEFAULT, recommended, GSMA-aligned)
 
 Dataset: `GSMA/ot-lite` / `GSMA/ot-full`.
 
-Purpose: non-default profile whose **scorers mirror the `gsma-evals` source**
-(`gsma-evals/src/evals/<task>/*.py`). Additive only; the default groups above are
-unchanged. See `GSMA_SCORING_CONTRACT.md` for the per-task official contract and the
-scorer-aligned vs engine-different split.
+Purpose: the **default / recommended** GSMA-compatible profile (run-script default) whose
+**scorers mirror the `gsma-evals` source** (`gsma-evals/src/evals/<task>/*.py`). Additive
+only; the legacy `*_lm_eval_baseline` groups above are unchanged. See
+`GSMA_SCORING_CONTRACT.md` for the per-task official contract and the scorer-aligned vs
+engine-different split.
 
 Group `metadata.version`: v0.1.
 
@@ -155,33 +193,34 @@ All `*_gsma` / `*_mcgen` task and group YAML carry `metadata.version: 0.1` and
 
 ## Per-task `metadata.version`
 
-The per-task YAML `metadata.version` values have drifted; they are not uniformly
-"v0.2". Current values:
+The per-task YAML `metadata.version` values (legacy `_lm_eval_baseline` tasks) have
+drifted; they are not uniformly "v0.2". Current values:
 
 | Task | `metadata.version` |
 |---|---|
-| `open_telco_teleqna` | v0.1 |
-| `open_telco_oranbench` | v0.1 |
-| `open_telco_srsranbench` | v0.1 |
-| `open_telco_3gpp_tsg` (MC) | v0.1 |
-| `open_telco_otlite_core4` (group) | v0.1 |
-| `open_telco_telemath` | v0.2 |
-| `open_telco_telelogs` | v0.2 |
-| `open_telco_teletables` | v0.2 |
-| `open_telco_3gpp_tsg_gen` | v0.2 |
-| `open_telco_otlite` (group) | v0.2 |
+| `open_telco_teleqna_lm_eval_baseline` | v0.1 |
+| `open_telco_oranbench_lm_eval_baseline` | v0.1 |
+| `open_telco_srsranbench_lm_eval_baseline` | v0.1 |
+| `open_telco_3gpp_tsg_lm_eval_baseline` (MC) | v0.1 |
+| `open_telco_otlite_core4_lm_eval_baseline` (group) | v0.1 |
+| `open_telco_telemath_lm_eval_baseline` | v0.2 |
+| `open_telco_telelogs_lm_eval_baseline` | v0.2 |
+| `open_telco_teletables_lm_eval_baseline` | v0.2 |
+| `open_telco_3gpp_tsg_gen_lm_eval_baseline` | v0.2 |
+| `open_telco_otlite_lm_eval_baseline` (group) | v0.2 |
 
-All `open_telco_full_*` tasks and the `open_telco_otfull` group are v0.2.
+All `open_telco_full_*_lm_eval_baseline` tasks and the
+`open_telco_otfull_lm_eval_baseline` group are v0.2.
 
 ## Generation settings (`max_gen_toks`)
 
-Actual `generation_kwargs.max_gen_toks` values from the task YAML:
+Actual `generation_kwargs.max_gen_toks` values from the legacy `_lm_eval_baseline` task YAML:
 
 | Task | `max_gen_toks` |
 |---|---|
-| `open_telco_telemath` / `open_telco_full_telemath` | 48 |
-| `open_telco_telelogs` / `open_telco_full_telelogs` | 24 |
-| `open_telco_3gpp_tsg_gen` / `open_telco_full_3gpp_tsg` | 32 |
+| `open_telco_telemath_lm_eval_baseline` / `open_telco_full_telemath_lm_eval_baseline` | 48 |
+| `open_telco_telelogs_lm_eval_baseline` / `open_telco_full_telelogs_lm_eval_baseline` | 24 |
+| `open_telco_3gpp_tsg_gen_lm_eval_baseline` / `open_telco_full_3gpp_tsg_lm_eval_baseline` | 32 |
 
 ## Task details
 
@@ -190,7 +229,8 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_teleqna`, `open_telco_full_teleqna` |
+| Local tasks (recommended `_gsma`) | `open_telco_teleqna_mcgen`, `open_telco_full_teleqna_mcgen` |
+| Local tasks (legacy, diagnostic) | `open_telco_teleqna_lm_eval_baseline`, `open_telco_full_teleqna_lm_eval_baseline` |
 | Public column | `teleqna` |
 | Type | multiple-choice |
 | Metrics | `acc`, `acc_norm` where configured |
@@ -202,7 +242,8 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_teletables`, `open_telco_full_teletables` |
+| Local tasks (recommended `_gsma`) | `open_telco_teletables_mcgen`, `open_telco_full_teletables_mcgen` |
+| Local tasks (legacy, diagnostic) | `open_telco_teletables_lm_eval_baseline`, `open_telco_full_teletables_lm_eval_baseline` |
 | Public column | `teletables` |
 | Type | multiple-choice table QA |
 | Metrics | `acc`, `acc_norm` where configured |
@@ -214,7 +255,8 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_oranbench`, `open_telco_full_oranbench` |
+| Local tasks (recommended `_gsma`) | `open_telco_oranbench_mcgen`, `open_telco_full_oranbench_mcgen` |
+| Local tasks (legacy, diagnostic) | `open_telco_oranbench_lm_eval_baseline`, `open_telco_full_oranbench_lm_eval_baseline` |
 | Public column | `oranbench` |
 | Type | multiple-choice |
 | Metrics | `acc`, `acc_norm` where configured |
@@ -226,7 +268,8 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_srsranbench`, `open_telco_full_srsranbench` |
+| Local tasks (recommended `_gsma`) | `open_telco_srsranbench_mcgen`, `open_telco_full_srsranbench_mcgen` |
+| Local tasks (legacy, diagnostic) | `open_telco_srsranbench_lm_eval_baseline`, `open_telco_full_srsranbench_lm_eval_baseline` |
 | Public column | `srsranbench` |
 | Type | multiple-choice source-code understanding |
 | Metrics | `acc`, `acc_norm` where configured |
@@ -238,13 +281,14 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_telemath`, `open_telco_full_telemath` |
+| Local tasks (recommended `_gsma`) | `open_telco_telemath_gsma`, `open_telco_full_telemath_gsma` |
+| Local tasks (legacy, diagnostic) | `open_telco_telemath_lm_eval_baseline`, `open_telco_full_telemath_lm_eval_baseline` |
 | Public column | `telemath` |
 | Type | generation with numeric answer parsing |
 | Metric | `acc` |
 | Prompt helper | `utils.doc_to_text_telemath` |
 | Parser | `utils.process_results_telemath` |
-| Current generation settings | deterministic, `max_gen_toks: 48` (per YAML) |
+| Current generation settings | deterministic; legacy `max_gen_toks: 48`, recommended `_gsma` `max_gen_toks: 256` (per YAML) |
 | Main risk | parser strictness, premature newline stop, units, rounding/tolerance, chain-of-thought vs final-answer formatting |
 
 ### TeleLogs
@@ -252,7 +296,8 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_telelogs`, `open_telco_full_telelogs` |
+| Local tasks (recommended `_gsma`) | `open_telco_telelogs_gsma`, `open_telco_full_telelogs_gsma` |
+| Local tasks (legacy, diagnostic) | `open_telco_telelogs_lm_eval_baseline`, `open_telco_full_telelogs_lm_eval_baseline` |
 | Public column | `telelogs` |
 | Type | generation with root-cause label parsing |
 | Metric | `acc` |
@@ -266,7 +311,8 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 | Item | Value |
 |---|---|
 | Dataset | `GSMA/ot-lite` / `GSMA/ot-full` |
-| Local tasks | `open_telco_3gpp_tsg`, `open_telco_3gpp_tsg_gen`, `open_telco_full_3gpp_tsg` |
+| Local tasks (recommended `_gsma`) | `open_telco_3gpp_tsg_gsma`, `open_telco_full_3gpp_tsg_gsma` |
+| Local tasks (legacy, diagnostic) | `open_telco_3gpp_tsg_gen_lm_eval_baseline` (generation), `open_telco_3gpp_tsg_lm_eval_baseline` (MC, core4 only), `open_telco_full_3gpp_tsg_lm_eval_baseline` |
 | Public column | `three_gpp` |
 | Type | working-group classification |
 | Metrics | `acc`, optionally `acc_norm` for MC variant |
@@ -279,9 +325,11 @@ Actual `generation_kwargs.max_gen_toks` values from the task YAML:
 
 - `scripts/compare_gsma_leaderboard.py`: leaderboard comparison helper. Compares a local
   result JSON against a public `GSMA/leaderboard` row. `--profile {default,gsma}` selects
-  the mapping: `default` (byte-identical to prior behavior) maps the legacy tasks; `gsma`
-  maps the `*_mcgen` / `*_gsma` tasks and emits a per-task delta table first, then a
-  labeled unweighted mean, with an MC-engine-unaligned caveat.
+  the mapping: `default` maps the legacy `*_lm_eval_baseline` tasks (diagnostic only, not
+  leaderboard-comparable); `gsma` (recommended) maps the `*_mcgen` / `*_gsma` tasks and
+  emits a per-task delta table first, then a labeled unweighted mean, with an
+  MC-engine-unaligned caveat. Historical pre-rename result JSONs used the bare task names
+  (e.g. `open_telco_teleqna`); compare those with `--map public_col=old_task` overrides.
 
 ## Known global issues
 

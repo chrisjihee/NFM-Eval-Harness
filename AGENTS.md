@@ -47,22 +47,33 @@ GPU 서버 환경 설정:
 ./setup-post.sh
 ```
 
-기본 `ot-lite` pack 실행:
+> **task name 규칙(RENAME, 2026-06).** 기본/권장 group = GSMA-compatible `open_telco_otlite_gsma` / `open_telco_otfull_gsma`
+> (run script 기본값; 아래처럼 `TASKS`를 생략하면 이 기본값이 실행된다). legacy lm-eval/loglikelihood baseline은
+> `_lm_eval_baseline` suffix로 보존(diagnostic only)되며 명시적으로 지정해야 한다. **bare `open_telco_otlite` / `open_telco_otfull`은
+> rename되어 실행 불가** — run script가 fail-fast `exit 2`로 거부한다.
+
+기본 `ot-lite` pack 실행(TASKS 생략 시 `open_telco_otlite_gsma`):
 
 ```bash
 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
-기본 `ot-full` pack 실행:
+기본 `ot-full` pack 실행(TASKS 생략 시 `open_telco_otfull_gsma`):
 
 ```bash
 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
 ```
 
-vLLM backend로 실행:
+vLLM backend로 실행(TASKS 생략 시 기본 `_gsma`):
 
 ```bash
 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+```
+
+legacy lm-eval baseline(diagnostic only, 명시적 지정):
+
+```bash
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_lm_eval_baseline ./run_open_telco_otlite.sh
 ```
 
 ## Completion Checklist

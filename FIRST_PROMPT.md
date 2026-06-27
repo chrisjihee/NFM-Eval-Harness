@@ -56,14 +56,18 @@ rank: 78 (약 76~78위)
 average: 0.397   (unweighted task mean)
 ```
 
-로컬에서 추적 중인 run은 다음과 같다.
+로컬에서 추적 중인 run은 다음과 같다(historical pre-rename group name).
 
 ```text
 model: google/gemma-3-4b-it
 backend: hf
-task group: open_telco_otlite
+task group: open_telco_otlite   # historical pre-rename name; 현재는 open_telco_otlite_lm_eval_baseline (bare name 실행 불가)
 group acc: 0.3718   (sample-weighted)
 ```
+
+> **이름 규칙(RENAME, 2026-06).** 기본/권장 실행 group은 GSMA-compatible `open_telco_otlite_gsma` / `open_telco_otfull_gsma`
+> (run script 기본값; `TASKS` 생략 시 실행). legacy lm-eval baseline은 `_lm_eval_baseline` suffix로 보존(diagnostic only).
+> **bare `open_telco_otlite`/`open_telco_otfull`은 rename되어 실행 불가**(run script `exit 2`). 과거 결과 설명의 bare name은 historical 기록이다.
 
 여기서 **반드시 짚어야 할 정정**이 있다. 로컬의 `0.3718`은 **sample-weighted** 집계(teleqna가 1000 sample로 지배적)이고, public의 `0.397`은 **unweighted task mean**이라 **집계방식이 서로 다르다.** 두 값을 직접 빼서 "격차 약 2.5%p"라고 말하면 틀린 비교다.
 

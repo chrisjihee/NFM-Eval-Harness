@@ -1,10 +1,18 @@
 # Environment notes
 
-Last updated: 2026-06-25
+Last updated: 2026-06-27
 
 ## Purpose
 
 This file records known environment assumptions for running `NFM-Eval-Harness`.
+
+> **Task name 정책 (rename).** The run scripts default to the GSMA-compatible
+> groups `open_telco_otlite_gsma` / `open_telco_otfull_gsma` (just omit `TASKS`;
+> unweighted). The legacy lm-eval/loglikelihood baseline is preserved as
+> `open_telco_{otlite,otfull}_lm_eval_baseline` (diagnostic). The bare group
+> names `open_telco_otlite` / `open_telco_otfull` are **not runnable** — the run
+> scripts fail fast and point to the new names. `*_mcgen` stays diagnostic
+> (unchanged). The commands below omit `TASKS`, so they run the `*_gsma` default.
 
 ## Current intended environment
 
@@ -96,20 +104,22 @@ or ensure the environment has appropriate `HF_TOKEN` access.
 
 These are full GPU runs, so each carries the explicit `CONFIRM_FULL_RUN=1` guard. For a
 quick check, use `LIMIT=5` instead of `CONFIRM_FULL_RUN=1` (see "Recommended smoke tests").
+Omitting `TASKS` runs the default `*_gsma` group. To run the legacy lm-eval baseline,
+set `TASKS=open_telco_otlite_lm_eval_baseline` (or `..._otfull_lm_eval_baseline`).
 
-`ot-lite` with HF backend:
+`ot-lite_gsma` (default) with HF backend:
 
 ```bash
 CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
-`ot-full` with HF backend:
+`ot-full_gsma` (default) with HF backend:
 
 ```bash
 CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
 ```
 
-`ot-lite` with vLLM backend:
+`ot-lite_gsma` (default) with vLLM backend:
 
 ```bash
 CONFIRM_FULL_RUN=1 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
@@ -137,7 +147,7 @@ lm_eval \
   --model hf \
   --model_args pretrained=google/gemma-3-4b-it \
   --include_path ./open_telco_lm_eval/tasks \
-  --tasks open_telco_telemath \
+  --tasks open_telco_telemath_gsma \
   --limit 5 \
   --device cuda:0 \
   --batch_size auto \

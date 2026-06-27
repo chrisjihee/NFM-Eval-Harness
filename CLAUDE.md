@@ -44,29 +44,33 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 
 ## Task pack 구조
 
-| Task group | 구성 | 비고 |
-|---|---|---|
-| `open_telco_otlite` | 7-task: `open_telco_teleqna` / `open_telco_teletables` / `open_telco_oranbench` / `open_telco_srsranbench` / `open_telco_telemath` / `open_telco_telelogs` / `open_telco_3gpp_tsg_gen` | 3gpp 그룹은 **생성형** `open_telco_3gpp_tsg_gen` |
-| `open_telco_otlite_core4` | legacy 4-task MC | MC 변형 `open_telco_3gpp_tsg`는 **이 legacy core4 전용** |
-| `open_telco_otfull` | `open_telco_full_*` 7-task | `utils.py`가 ot-lite utils를 importlib로 재노출 |
-| `open_telco_{otlite,otfull}_gsma` | 비-default 7-task: MC 4종 `*_mcgen`(teletables 포함) + 생성형 3종 `*_gsma` | scorer만 공식(`gsma-evals`) 정렬, engine은 미정렬(특히 MC). unweighted(`weight_by_size: false`). 상세는 `GSMA_SCORING_CONTRACT.md` |
+> **이름 규칙(RENAME, 2026-06).** 기본/권장 group = GSMA-compatible `_gsma`(run script 기본값; `TASKS` 생략 시 실행). legacy lm-eval/loglikelihood baseline은 삭제하지 않고 `_lm_eval_baseline` suffix로 rename(diagnostic only). **bare `open_telco_otlite` / `open_telco_otfull`은 rename되어 실행 불가** — run script가 fail-fast `exit 2`로 거부한다. 현재 task name으로 bare name을 쓰지 말 것.
 
-중요: 3gpp 그룹의 정확한 생성형 task 이름은 `open_telco_3gpp_tsg_gen`이다. MC 변형 `open_telco_3gpp_tsg`는 legacy `open_telco_otlite_core4`에서만 쓴다.
+| Task group | 현재 이름 | 구성 | 비고 |
+|---|---|---|---|
+| **기본/권장 (GSMA-compatible)** | `open_telco_otlite_gsma` / `open_telco_otfull_gsma` | 7-task: MC 4종 `*_mcgen`(teletables 포함) + 생성형 3종 `*_gsma` | run script 기본값(TASKS 생략 시 실행). leaderboard 비교 가능. scorer만 공식(`gsma-evals`) 정렬, engine은 미정렬(특히 MC). unweighted(`weight_by_size: false`). 상세는 `GSMA_SCORING_CONTRACT.md` |
+| legacy baseline (diagnostic only) | `open_telco_otlite_lm_eval_baseline` | 7-task: `open_telco_teleqna_lm_eval_baseline` / `…_teletables…` / `…_oranbench…` / `…_srsranbench…` / `…_telemath…` / `…_telelogs…` / `open_telco_3gpp_tsg_gen_lm_eval_baseline` | 3gpp 그룹은 **생성형** `open_telco_3gpp_tsg_gen_lm_eval_baseline`. lm-eval/loglikelihood baseline(과거 default). |
+| legacy baseline (diagnostic only) | `open_telco_otlite_core4_lm_eval_baseline` | legacy 4-task MC | MC 변형 `open_telco_3gpp_tsg_lm_eval_baseline`는 **이 legacy core4 전용** |
+| legacy baseline (diagnostic only) | `open_telco_otfull_lm_eval_baseline` | `open_telco_full_*_lm_eval_baseline` 7-task | `utils.py`가 ot-lite utils를 importlib로 재노출 |
+| MC sensitivity diagnostic | `open_telco_otlite_mcgen` / `open_telco_otfull_mcgen` | MC 3종(`*_mcgen`)만 | MC-only generation-vs-constrained-decoding sensitivity 진단(불변) |
+
+중요: 3gpp 그룹의 정확한 생성형 task 이름은 (기본 `_gsma` profile) `open_telco_3gpp_tsg_gsma`, (legacy baseline) `open_telco_3gpp_tsg_gen_lm_eval_baseline`이다. MC 변형 `open_telco_3gpp_tsg_lm_eval_baseline`는 legacy `open_telco_otlite_core4_lm_eval_baseline`에서만 쓴다.
 
 **otfull 결합 주석**: `open_telco_lm_eval/tasks/open_telco_otfull/utils.py`는 ot-lite의 `utils.py`를 importlib로 재노출한다(`exec_module` 후 비-underscore 이름 전체를 globals로 복사). 결과적으로 **ot-lite parser/util 변경은 ot-full 동작을 동시에 변경**한다 — 단일 commit이 두 트랙에 동시 영향을 주며 독립 revert가 불가능하다. parser/util을 만질 때는 commit 메시지에 "affects both tracks via importlib re-export"를 명기한다.
 
-**task별 `metadata.version` drift**: group `open_telco_otlite` 및 `telelogs` / `telemath` / `teletables` / `3gpp_tsg_gen` = **v0.2**; `teleqna` / `3gpp_tsg` / `oranbench` / `srsranbench` / `core4` = **v0.1**. "ot-lite 7-task 전부 v0.2"라는 일괄 기술은 부정확하다.
+**task별 `metadata.version` drift**(legacy `_lm_eval_baseline` 트랙 기준): group `open_telco_otlite_lm_eval_baseline` 및 `telelogs` / `telemath` / `teletables` / `3gpp_tsg_gen` = **v0.2**; `teleqna` / `3gpp_tsg` / `oranbench` / `srsranbench` / `core4` = **v0.1**. "ot-lite 7-task 전부 v0.2"라는 일괄 기술은 부정확하다.
 
-MC task(`teleqna` / `teletables` / `oranbench` / `srsranbench`)는 `output_type: multiple_choice` → loglikelihood scoring.
-생성형 task(`telemath` / `telelogs` / `3gpp_tsg_gen`)는 `generate_until`, 전부 `until: ["\n"]`, `do_sample=false`, `max_gen_toks`는 telemath **48** / telelogs **24** / 3gpp_tsg_gen **32**.
+MC task(legacy: `teleqna_lm_eval_baseline` / `teletables_lm_eval_baseline` / `oranbench_lm_eval_baseline` / `srsranbench_lm_eval_baseline`)는 `output_type: multiple_choice` → loglikelihood scoring.
+생성형 task(legacy: `telemath_lm_eval_baseline` / `telelogs_lm_eval_baseline` / `3gpp_tsg_gen_lm_eval_baseline`)는 `generate_until`, 전부 `until: ["\n"]`, `do_sample=false`, `max_gen_toks`는 telemath **48** / telelogs **24** / 3gpp_tsg_gen **32**.
 
 **GSMA 정렬 프로파일(`*_gsma` / `*_mcgen`, 비-default)**: scorer만 공식 `gsma-evals/src/evals/*` 소스와 정렬한 additive 그룹이다. default scoring은 동결. **"공식 GSMA 완전 재현"을 주장하지 않는다**(= public 코드 정렬 시도). scorer-aligned이되 **engine은 다르다**: MC 4종은 자유 single-letter `generate_until`(`max_gen_toks:8`)로 공식 제약 디코딩(`multiple_choice(cot=False)`)과 **미정렬 — 가장 큰 미정렬 축이자 지배적 후보 격차 동인**. 생성형 3종 `*_gsma`는 `until:[]` + `max_gen_toks:256`(scorer-fit/cost, parity-loss 아님)이고 scorer는 공식 동일(telemath isclose 0.01 / telelogs soft 첫 정수 / 3gpp WG regex first-match). telelogs/3gpp는 `\boxed{}`/WG token 미출력 시 soft scorer가 무조건 INCORRECT → **collapse 위험**이므로 smoke emission-rate(≥0.30)가 HARD gate, 미달 시 `*_gsma_hinted` 변형으로 대체 측정. 전체 contract는 `GSMA_SCORING_CONTRACT.md` 참조.
 
 ## 핵심 진단 (north star — 독립 검증 완료, 귀인은 미확정)
 
 > **집계방식 정정(중요).** 기존 문서의 "local 0.3718 vs public 0.397, 격차 2.5%p"는 집계방식 착시다.
-> - local `open_telco_otlite` group acc `0.3718`은 **sample-weighted**다(fork의 `weight_by_size` default True + otlite group YAML 미override → teleqna 1000 sample이 지배). public `0.397`은 **unweighted task mean**이다.
+> - local group acc `0.3718`은 **sample-weighted**다(fork의 `weight_by_size` default True + otlite group YAML 미override → teleqna 1000 sample이 지배). public `0.397`은 **unweighted task mean**이다. 이 `0.3718` run은 historical pre-rename group name `open_telco_otlite`(현재는 `open_telco_otlite_lm_eval_baseline`로 rename, bare name 실행 불가)에서 측정된 것이며 사실 기록으로 보존한다.
 > - 동일 기준(둘 다 7-task 단순평균)으로 비교하면 local **0.259** vs public **0.397 ≈ −13.8%p**가 **후보 격차(candidate gap, 단정 아님)**다.
+> - 현재 권장 실행 경로는 `_gsma` profile(`open_telco_otlite_gsma`)이며, leaderboard 비교는 이 unweighted profile로 한다.
 
 격차의 **귀인은 미확정**이며 다음 세 요소 중 무엇으로도 설명될 수 있다. 단일 원인으로 단정하지 말 것.
 - (a) scoring 방식(loglikelihood vs generation+extract).
@@ -77,9 +81,9 @@ MC task(`teleqna` / `teletables` / `oranbench` / `srsranbench`)는 `output_type:
 
 공식 GSMA의 MC 추출 방식은 repo 문서상 **명시적 UNKNOWN**이다. generation 변형의 점수 상승을 "공식 정렬"로 명명/주장하지 말고 "generation-based scoring sensitivity 실험"으로만 다룬다.
 
-비교 수치 스냅샷(재-pull 필요):
+비교 수치 스냅샷(재-pull 필요). public column 이름은 leaderboard 자체 라벨이고, local 수치는 historical pre-rename run(group `open_telco_otlite`, 현재 `open_telco_otlite_lm_eval_baseline`)에서 측정된 것이다:
 - public gemma3-4b(unweighted): teleqna 0.652 / teletables 0.273 / oranbench 0.660 / srsranbench 0.740 / telemath 0.137 / telelogs 0.117 / three_gpp 0.200 / avg 0.397.
-- local 7-task run: teleqna 0.450 / teletables 0.200 / oranbench 0.367 / srsranbench 0.547 / telemath 0.010 / telelogs 0.170 / 3gpp_tsg_gen 0.070.
+- local 7-task run(historical): teleqna 0.450 / teletables 0.200 / oranbench 0.367 / srsranbench 0.547 / telemath 0.010 / telelogs 0.170 / 3gpp_tsg_gen 0.070.
 
 자세한 분해와 caveat는 `REPRODUCTION_NOTES.md` 참조.
 
@@ -135,6 +139,8 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 - `run_open_telco_*.sh`의 주요 env: `MODEL_NAME` / `BACKEND`(hf|vllm) / `DEVICE` / `BATCH_SIZE` / `TASKS` / `VLLM_VISIBLE_DEVICES` / `GPU_MEMORY_UTILIZATION` / `MAX_MODEL_LEN` / `TENSOR_PARALLEL_SIZE`.
 - `TELETABLES_ROOT`는 run 스크립트가 set하지 않는다 → teletables 원본 표가 필요하면 별도 export. 미설정 시 teletables는 metadata-only(저평가/degraded).
 
+> **task name 규칙 재확인.** run script 기본값(TASKS 생략)은 `_gsma`(기본/권장). bare `open_telco_otlite`/`open_telco_otfull`은 rename되어 실행 불가(run script `exit 2`). legacy lm-eval baseline은 `_lm_eval_baseline` suffix를 명시해야 한다(diagnostic only).
+
 ```bash
 # 환경 준비 (GPU 서버)
 ./setup-pre.sh && ./setup-main.sh && ./setup-post.sh
@@ -142,16 +148,20 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 # GPU 없이 task 로딩 검증 (smoke)
 make smoke
 
-# 단일 task bounded run (HF)
-MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_teleqna DEVICE=cuda:0 LIMIT=5 ./run_open_telco_otlite.sh
+# 기본(권장) ot-lite_gsma 단일-task bounded run (HF) — leaf task name도 _mcgen/_gsma suffix
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_teleqna_mcgen DEVICE=cuda:0 LIMIT=5 ./run_open_telco_otlite.sh
 
-# ot-lite 전체 (full run — 명시 승인 플래그 필요)
+# 기본(권장) ot-lite_gsma 전체 (TASKS 생략 시 기본값 = open_telco_otlite_gsma; full run은 승인 플래그 필요)
 MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
 
-# vLLM 백엔드 (.venv activate 보장 위해 run 스크립트 경유)
+# vLLM 백엔드 (.venv activate 보장 위해 run 스크립트 경유; TASKS 생략 시 기본 _gsma)
 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
 
-# GSMA 정렬 그룹 — TASKS만 바꾸면 됨(run 스크립트는 --include_path로 신규 YAML 자동 발견)
+# (diagnostic only) legacy lm-eval/loglikelihood baseline — 명시적으로 _lm_eval_baseline 지정
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_lm_eval_baseline CONFIRM_FULL_RUN=1 \
+  OUTPUT_PATH=results/open_telco_otlite_lm_eval_baseline ./run_open_telco_otlite.sh
+
+# GSMA 정렬 그룹 — 기본값이므로 TASKS 생략 가능, 명시도 동일(run 스크립트는 --include_path로 신규 YAML 자동 발견)
 # 1) ot-lite_gsma smoke (HARD gate: drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율 측정)
 MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma DEVICE=cuda:0 LIMIT=20 \
   OUTPUT_PATH=results/open_telco_otlite_gsma_smoke ./run_open_telco_otlite.sh
