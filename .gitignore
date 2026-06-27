@@ -185,6 +185,9 @@ outputs/*
 !outputs/latest-summary.md
 !outputs/run-index.jsonl
 !outputs/model-candidate-plan.md
+!outputs/model-candidate-plan-extended.md
+!outputs/overnight-otfull-run-plan.md
+!outputs/overnight-otfull-results.md
 !outputs/*-leaderboard-delta.md
 !outputs/*-gsma-delta.md
 outputs-*/
