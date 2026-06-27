@@ -1,6 +1,14 @@
 # Latest Result Summary
 
-마지막 갱신: 2026-06-27
+마지막 갱신: 2026-06-28
+
+## 2026-06-28 PASS5 확장 후보 검증 (ot-lite 11 + ot-full 14, 가장 최신)
+
+지능네트워크연구실 전달 전 확장 검증. 상세: `outputs/model-candidate-plan-extended.md`(ot-lite), `outputs/overnight-otfull-results.md`(ot-full), `outputs/overnight-otfull-run-plan.md`.
+
+- **ot-full_gsma full split(16,866 docs) — LB 11종 + reference(gemma-3-4b) 전부 public 재현**: qwen2.5-32b 0.5050(−0.002,tp2)/falcon3-10b 0.4598(+0.001)/gemma2-9b 0.4352(+0.002)/qwen2.5-14b 0.4791(−0.006)/phi-4 0.4959(−0.009)/qwen2.5-7b 0.4460(−0.012)/nemo 0.4318(+0.014)/mistral-small-24b 0.4958(−0.021,tp2)/qwen3-8b 0.4479(+0.037). **비-gemma3 9종 ±0.021 이내.** gemma3 2종만 더 큼(gemma3-12b −0.037/gemma3-27b −0.047,tp2 — 생성형 emission 취약). non-LB internal: qwen3-30b-a3b-fp8 0.459/qwen3-14b 0.462/qwen3.5-9b 0.436.
+- **tp=2 검증**(NCCL loopback fix), **환경(VM) 이슈 레시피**(standalone snapshot_download 선캐시+HF_HUB_OFFLINE=1+NCCL loopback+enforce_eager+MAXLEN8192+GMU0.9; Mistral=tokenizer_mode=mistral).
+- **제외(artifact/비호환)**: gpt-oss-20b(harmony→MC collapse), gemma-4-E4B(토크나이저 비호환), Qwen3.6-27B-FP8(dl 실패), R1-Distill(collapse).
 
 > **Rename 안내.** 권장/기본 실행 그룹은 `open_telco_otlite_gsma` /
 > `open_telco_otfull_gsma`입니다(run 스크립트 기본값 — `TASKS` 생략 시 실행).

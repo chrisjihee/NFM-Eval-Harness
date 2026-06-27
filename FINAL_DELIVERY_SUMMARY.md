@@ -94,6 +94,16 @@ public row가 없어 reference(gemma3-4b 0.399 / qwen2.5-7b 0.454) 대비 상대
 - **Qwen3-14B (thinking-OFF) 0.4678** — 후보 중 상위권(MC oran 0.780/teleqna 0.741). telelogs만 형식-emission으로 0.0.
 - **DeepSeek-R1-Distill-14B 0.0514** — ⚠ MC 붕괴 artifact(§6), 능력치로 해석 금지.
 
+## 4b. PASS5 확장 후보 평가 (ot-lite 11종 스크리닝 + ot-full 14종, 2026-06-27~28)
+
+지능네트워크연구실 전달 전 확장 검증으로 10B/20B/30B leaderboard·non-leaderboard 후보를 대거 추가 평가했다. 상세 표는 `outputs/model-candidate-plan-extended.md`(ot-lite) / `outputs/overnight-otfull-run-plan.md` / `outputs/overnight-otfull-results.md`(ot-full) 참조.
+
+- **ot-lite_gsma 스크리닝(신규 11종)**: LB 8종(phi-4 0.5225/qwen2.5-32b 0.503 tp2/mistral-small-24b 0.5013 tp2/qwen2.5-14b 0.489/qwen3-8b 0.4624/gemma3-27b 0.4563 tp2/gemma2-9b 0.4494/mistral-nemo 0.434) 전부 public 재현(Δ −0.048~+0.052); non-LB exotic 3종(qwen3.5-9b 0.446/qwen3-30b-a3b-fp8 0.475/ministral 0.35).
+- **ot-full_gsma full split(14종)**: LB 11종 + reference(gemma-3-4b) **전부 public을 재현 — 9/11이 ±0.021, 핵심 결과**: qwen2.5-32b −0.002·falcon3-10b +0.001·gemma2-9b +0.002·qwen2.5-14b −0.006·phi-4 −0.009·qwen2.5-7b −0.012·nemo +0.014·mistral-small-24b −0.021. gemma3 계열만 −0.037~(생성형 emission 취약). non-LB(qwen3-30b-a3b-fp8 0.459/qwen3-14b 0.462/qwen3.5-9b 0.436)은 internal 비교.
+- **tp=2 검증**: 24~32B 모델 NCCL loopback fix로 multi-GPU 정상(무hang).
+- **제외(artifact/비호환, 능력치 아님)**: gpt-oss-20b(harmony 추론→단답 MC collapse), gemma-4-E4B(vLLM 토크나이저 비호환), Qwen3.6-27B-FP8(다운로드/로드 실패), R1-Distill(reasoning collapse).
+- **환경 주의(이 호스트)**: 동일 노드 QEMU VM 가동 시 (1) NCCL 인터페이스 hang→`NCCL_SOCKET_IFNAME=lo NCCL_IB_DISABLE=1`, (2) vLLM in-process HF-hub 다운로드 hang→standalone `snapshot_download` 선캐시 후 `HF_HUB_OFFLINE=1`. 9B+ 모델은 `GPU_MEMORY_UTILIZATION=0.9`, Mistral은 `tokenizer_mode=mistral`.
+
 ## 5. thinking / reasoning 모델 처리
 
 - `enable_thinking=False`(opt-in `EXTRA_MODEL_ARGS`)로 Qwen3 계열 추론 억제. **Qwen3-4B/14B 응답 1700개 중 `<think>` 0개** 확인. MC는 깨끗한 단일 letter.
