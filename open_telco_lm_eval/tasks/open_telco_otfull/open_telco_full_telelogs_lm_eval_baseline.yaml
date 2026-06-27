@@ -1,4 +1,7 @@
-task: open_telco_full_telelogs
+# LEGACY lm-eval/loglikelihood baseline (renamed from `open_telco_full_telelogs`).
+# NOT GSMA-leaderboard-comparable -- diagnostic only. Use the *_gsma profile
+# (open_telco_otlite_gsma / open_telco_otfull_gsma) for leaderboard comparison.
+task: open_telco_full_telelogs_lm_eval_baseline
 dataset_path: GSMA/ot-full
 dataset_name: telelogs
 output_type: generate_until

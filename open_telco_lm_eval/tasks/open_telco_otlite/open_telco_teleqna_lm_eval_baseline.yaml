@@ -1,6 +1,9 @@
-task: open_telco_oranbench
+# LEGACY lm-eval/loglikelihood baseline (renamed from `open_telco_teleqna`).
+# NOT GSMA-leaderboard-comparable -- diagnostic only. Use the *_gsma profile
+# (open_telco_otlite_gsma / open_telco_otfull_gsma) for leaderboard comparison.
+task: open_telco_teleqna_lm_eval_baseline
 dataset_path: GSMA/ot-lite
-dataset_name: oranbench
+dataset_name: teleqna
 output_type: multiple_choice
 training_split: null
 validation_split: null

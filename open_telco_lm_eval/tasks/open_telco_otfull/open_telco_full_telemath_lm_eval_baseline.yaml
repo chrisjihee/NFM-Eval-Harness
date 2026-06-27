@@ -1,5 +1,8 @@
-task: open_telco_telemath
-dataset_path: GSMA/ot-lite
+# LEGACY lm-eval/loglikelihood baseline (renamed from `open_telco_full_telemath`).
+# NOT GSMA-leaderboard-comparable -- diagnostic only. Use the *_gsma profile
+# (open_telco_otlite_gsma / open_telco_otfull_gsma) for leaderboard comparison.
+task: open_telco_full_telemath_lm_eval_baseline
+dataset_path: GSMA/ot-full
 dataset_name: telemath
 output_type: generate_until
 training_split: null
@@ -20,6 +23,6 @@ metric_list:
     higher_is_better: true
 metadata:
   version: 0.2
-  nfm_track: ot-lite
+  nfm_track: ot-full
   leaderboard_task: telemath
   task_family: telco_generation
