@@ -13,6 +13,9 @@
 | 2026-06-26 | `otlite-gemma3-4b-vllm-3` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otlite` | `0.365 acc` | hf와 parity(노이즈 내). |
 | 2026-06-26 | `otlite-qwen2.5-7b-hf-1` | `Qwen/Qwen2.5-7B-Instruct` | `hf` | `open_telco_otlite`(+`_mcgen`) | `0.423 acc` (uw 0.286) | 비교 모델. mcgen group=`0.732`. |
 | 2026-06-26 | `otfull-gemma3-4b-vllm-1` | `google/gemma-3-4b-it` | `vllm`(tp=2) | `open_telco_otfull`(+`_mcgen`) | `0.354 acc` (uw 0.251) | **public와 동일 split**. mcgen group=`0.648`. teletables degraded. |
+| 2026-06-27 | `otlite-gsma-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otlite_gsma` | `0.3992 acc` (unweighted) | **GSMA-aligned scorer. unweighted ≈ public 0.397 (+0.002).** |
+| 2026-06-27 | `telelogs-gsma-hinted-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_telelogs_gsma_hinted` | `0.13 acc` | telelogs raw collapse(0.090) → format-hint 회복 ≈ public 0.117. |
+| 2026-06-27 | `otfull-gsma-gemma3-4b-vllm` | `google/gemma-3-4b-it` | `vllm` | `open_telco_otfull_gsma` | `0.3926 acc` (unweighted) | **public 동일 split·대규모 N에서 ≈ public 0.397 (−0.004).** telelogs faithful 0.118≈0.117. |
 
 ## 2026-05-15: Gemma 3 4B IT On ot-lite
 
@@ -110,3 +113,44 @@ Task별 점수:
 - **결론(강화)**: public과 동일 split + 대규모 N(teleqna 10k)에서도 generation-based MC가 public에 근접 → 공식 GSMA가 generation 답 추출 방식이라는 가설을 강하게 지지. (여전히 공식 미확정 → `*_mcgen` 비-default 유지.)
 - teletables는 표 데이터 부재로 degraded(−0.061), generation(telemath/3gpp)은 ot-lite와 동일하게 낮음(scoring 아닌 generation budget/parser 이슈). telelogs는 public과 동률.
 - 실행 메모: vLLM tp=2 종료 시 NCCL/c10 teardown 경고가 로그에 남으나 평가 결과(JSON, full n-samples)는 정상 생성됨.
+
+## 2026-06-27: GSMA-aligned profile (open_telco_*_gsma, gemma-3-4b-it, vLLM)
+
+scorer를 `gsma-evals/src/evals/*` 소스와 1:1 정렬한 **비-default** 프로파일. MC 4종=`*_mcgen`(generation+letter), 생성형 3종=`*_gsma`(telemath isclose 0.01 / telelogs soft 첫정수 / 3gpp WG regex). 그룹은 **unweighted**(`weight_by_size: false`). 상세 contract: `GSMA_SCORING_CONTRACT.md`. **"공식 재현" 주장 아님**(engine 미정렬: MC는 자유 gen vs 공식 제약 디코딩; lm-eval vs Inspect; variant 미확정).
+
+### open_telco_otlite_gsma (faithful, full) vs public gemma3-4b
+
+| task | local `_gsma` | public | delta |
+|---|---:|---:|---:|
+| teleqna | 0.6610 | 0.652 | +0.0087 |
+| oranbench | 0.6733 | 0.660 | +0.0133 |
+| srsranbench | 0.7800 | 0.740 | +0.0400 |
+| teletables | 0.2500 | 0.273 | −0.0233 |
+| telemath | 0.1000 | 0.137 | −0.0367 |
+| telelogs (faithful raw) | 0.0900 | 0.117 | −0.0267 |
+| three_gpp | 0.2400 | 0.200 | +0.0400 |
+| **unweighted mean** | **0.3992** | **0.397** | **+0.0022** |
+
+- **핵심**: GSMA-aligned scoring으로 unweighted 평균 `0.3992` ≈ public `0.397`(+0.0022). 즉 기존 ~−13.8%p 후보 격차의 **거의 전부가 scoring 방식(loglikelihood→generation) + 집계(sample-weighted→unweighted)** 로 설명됨.
+- **telelogs prompt-format 효과**: faithful raw `0.090`(collapse) vs `_gsma_hinted`(+1줄 형식 지시) `0.13` ≈ public `0.117`. 격차 원인은 raw question에서 4B가 라벨 미출력 → format hint로 회복. (hinted는 공식 raw-contract 이탈 비교군으로 명시.)
+- collapse gate 기록: telemath/telelogs는 `max_gen_toks:256`에서 CoT가 `\boxed{}` 전에 잘려 boxed-rate 0.00 → **1024로 상향**(GSMA 무캡 생성 정합) 후 telemath boxed-rate 0.80 회복.
+- 결과: `results/open_telco_otlite_gsma/`, `results/telelogs_gsma_hinted/`. 비교표: `outputs/gemma3-4b-otlite-gsma-delta.md`(`compare_gsma_leaderboard.py --profile gsma`).
+- 무결성: per-task delta가 ±0.04 내(아웃라이어 없음), 점수 끼워맞춤·누수·하드코딩 없음. MC engine 미정렬이 최대 미정렬 축임을 compare/contract에 명시.
+
+### open_telco_otfull_gsma (public 동일 split, full, vLLM) vs public gemma3-4b
+
+| task | local `_gsma` | public | delta | N |
+|---|---:|---:|---:|---:|
+| teleqna | 0.6305 | 0.652 | −0.0218 | 10000 |
+| oranbench | 0.6333 | 0.660 | −0.0267 | 1500 |
+| srsranbench | 0.7776 | 0.740 | +0.0376 | 1502 |
+| teletables | 0.2620 | 0.273 | −0.0113 | 500 |
+| telemath | 0.0980 | 0.137 | −0.0390 | 500 |
+| telelogs (faithful raw) | 0.1181 | 0.117 | +0.0011 | 864 |
+| three_gpp | 0.2285 | 0.200 | +0.0285 | 2000 |
+| **unweighted mean** | **0.3926** | **0.397** | **−0.0044** |
+
+- **public 동일 split + 대규모 N에서 재확인**: GSMA-aligned unweighted `0.3926` ≈ public `0.397`(−0.0044). ot-lite(0.3992)와 일관.
+- **telelogs faithful `0.118` ≈ public `0.117`**: ot-full(864샘플 + 1024 budget + max_model_len 8192)에서는 raw question collapse가 사라짐 → ot-lite의 collapse는 small-n/budget 아티팩트였음(hinted 없이도 정합). teletables도 0.262≈0.273.
+- 결과: `results/open_telco_otfull_gsma/`. 비교표: `outputs/gemma3-4b-otfull-gsma-delta.md`.
+- 결론(정직): 기존 ~−13.8%p 후보 격차의 거의 전부가 **scoring 방식 + 집계 방식** 차이로 설명됨(ot-lite·ot-full 양쪽, gemma·Qwen MC 양쪽에서 일관). 여전히 **"공식 재현" 아님**(MC engine 자유 gen vs 제약 디코딩, lm-eval vs Inspect, model variant 미확정).
