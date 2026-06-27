@@ -8,6 +8,24 @@
 > bare `open_telco_otlite` / `open_telco_otfull`은 실행 불가입니다(fail-fast).
 > 아래 과거 수치 중 bare 이름으로 기록된 것은 historical(rename 전 실행 사실)입니다.
 
+## 2026-06-27 (delivery) 다중 모델 ot-lite_gsma 평가
+
+지능네트워크연구실 전달용 6모델 `open_telco_otlite_gsma` full(unweighted task mean). 전체 분해는 `FINAL_DELIVERY_SUMMARY.md`.
+
+| 모델 | uw | public | delta | 구분 |
+|---|---:|---:|---:|---|
+| Qwen2.5-7B-Instruct | 0.4544 | 0.4579 | −0.0035 | LB ✓근접 |
+| Falcon3-10B-Instruct | 0.4791 | 0.4588 | +0.0203 | LB |
+| gemma-3-12b-it | 0.4277 | 0.4638 | −0.0362 | LB (telemath 0.04 emission) |
+| Qwen3-4B (think-OFF) | 0.4463 | — | — | 내부 (0/1700 `<think>`) |
+| Qwen3-14B (think-OFF) | 0.4678 | — | — | 내부 (0/1700 `<think>`) |
+| DeepSeek-R1-Distill-14B | 0.0514 | — | — | 내부 ⚠ MC collapse=artifact |
+
+- leaderboard 3모델 delta 부호가 엇갈림(+0.020 / −0.004 / −0.036) → 억지 정렬 아님. MC 4종 engine 미정렬(자유 gen vs 제약 디코딩) caveat 유지.
+- Qwen3 계열은 `enable_thinking=False`(opt-in `EXTRA_MODEL_ARGS`)로 추론 억제 검증(응답 `<think>` 0개). DeepSeek-R1-Distill은 해당 flag 무시 → MC max_gen_toks:8에 추론 산문 truncate → 붕괴(artifact, 능력치 아님).
+- gemma-3-12b는 128K 기본 context가 40GB 단일카드 KV cache 초과 → `MAX_MODEL_LEN=8192`로 실행.
+- compare: `outputs/{qwen2.5-7b,falcon3-10b,gemma3-12b}-otlite-gsma-delta.md` · 계획: `outputs/model-candidate-plan.md`.
+
 ## 2026-06-27 GSMA-aligned 프로파일 결과 (가장 중요)
 
 scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco_otlite_gsma`(unweighted, 권장/기본)로 gemma-3-4b-it 실행:
@@ -49,7 +67,7 @@ scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco
 - 모델: `google/gemma-3-4b-it` | Backend: `vllm`(tp=2) | 16,866 docs
 - default unweighted **0.251** vs public **0.397** (delta −0.146); group(sample-weighted) 0.354
 - **mcgen near-reproduction (대규모 N)**: teleqna 0.422→**0.630**(pub 0.652, N=10k), oranbench 0.353→**0.635**(pub 0.660), srsranbench 0.551→**0.777**(pub 0.740)
-- teletables degraded(표 데이터 부재), generation(telemath/3gpp) 여전히 낮음(별도 원인)
+- teletables(default column) 낮음(표주입 경로 미설정); **`_gsma`/`_mcgen` teletables는 question-only=GSMA parity**. generation(telemath/3gpp) 여전히 낮음(별도 원인)
 - 결과: `results/otfull-gemma3-4b-vllm-1/` · 비교: `outputs/gemma3-4b-otfull-leaderboard-delta.md`
 
 ## 미실행 / 다음 단계

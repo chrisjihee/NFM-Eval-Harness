@@ -103,14 +103,15 @@ dataset은 7 task 전부 `GSMA/ot-lite`(또는 `--full` 시 `GSMA/ot-full`), con
   변형이며, smoke에서 first vs last acc를 동시 산출해 first가 공식 동작과 일치함을 확인하고 public 0.200과
   delta를 기록한다(gating 아님).
 
-### 2.5 max_gen_toks=256 = 의도적 scorer-fit/cost 선택 (NOT parity-loss)
+### 2.5 max_gen_toks (per-task): telemath/telelogs=1024, 3gpp_tsg=256
 
-- 공식 Inspect는 max_tokens를 provider-default로 둔다(미지정). 우리 `*_gsma` 생성형 3종은
-  `max_gen_toks: 256`, `until: []`로 둔다.
-- scorer는 telemath/telelogs의 **마지막** boxed(`matches[-1]`) / 3gpp의 **첫** WG token만 읽으므로,
-  더 큰 EOS-stop 예산은 점수 이득이 사실상 0이고 long-tail GPU 비용(vLLM ot-full에 곱)만 늘린다.
-- 따라서 256은 **의도적 scorer-fit/cost 선택이며 parity-loss가 아니다.** smoke에서 cap-hit율
-  (=256 도달 비율)을 측정하고, 높으면(예 >0.20) 추가 하향 vs 미세 점수 trade-off를 명시해 승인 요청한다.
+- 공식 Inspect는 max_tokens를 provider-default(미지정)로 둔다. 우리 `*_gsma` 생성형은 **task별로** 둔다:
+  **telemath/telelogs `max_gen_toks: 1024`, 3gpp_tsg `max_gen_toks: 256`**, 모두 `until: []`.
+- scorer는 telemath/telelogs의 **마지막** boxed(`matches[-1]`) / 3gpp의 **첫** WG token만 읽는다.
+  3gpp는 WG 토큰이 짧아 큰 예산이 점수 이득 없이 GPU 비용만 늘리므로 256 유지; telemath/telelogs는 다름(아래).
+- telemath/telelogs는 모델이 CoT를 거쳐 `\boxed{}`에 도달해야 하므로 256에서는 boxed가 잘려
+  boxed-rate≈0.00로 collapse했고 **1024로 상향해 boxed-rate 0.80 회복**(EXPERIMENTS.md 2026-06-27).
+  3gpp는 WG 토큰이 짧아 256으로 충분(의도적 유지) = parity-loss 아님. smoke에서 cap-hit율을 측정한다.
 
 ### 2.6 cross-task average = 공식 코드 미계산; unweighted mean = leaderboard 관례
 
