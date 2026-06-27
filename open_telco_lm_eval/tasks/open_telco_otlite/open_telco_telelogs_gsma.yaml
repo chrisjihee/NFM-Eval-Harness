@@ -3,7 +3,8 @@
 # still differs (lm-eval generate_until vs official Inspect generate). The
 # default open_telco_telelogs task is unchanged.
 #
-# max_gen_toks=256 is a deliberate scorer-fit/cost choice (scorer reads only
+# max_gen_toks=1024 (LIMIT=20 smoke: the 256 cap truncated CoT before the
+# final \boxed{} -> boxed-rate 0.00; raised to match GSMA's uncapped generation) (scorer reads only
 # the first/last extracted label); NOT a parity-loss. Official Inspect leaves
 # max_tokens provider-default; cap-hit% measured at smoke.
 task: open_telco_telelogs_gsma
@@ -20,7 +21,7 @@ generation_kwargs:
   until: []
   do_sample: false
   temperature: 0.0
-  max_gen_toks: 256
+  max_gen_toks: 1024
 metric_list:
   - metric: acc
     aggregation: mean
