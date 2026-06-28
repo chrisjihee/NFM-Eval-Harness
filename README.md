@@ -92,6 +92,61 @@ python scripts/compare_gsma_leaderboard.py --profile gsma --model gemma3-4b \
 
 PR#2 결과 (gemma3-4b): `open_telco_otlite_gsma` 0.3992 / `open_telco_otfull_gsma` 0.3926 ≈ public 0.397.
 
+## 인수자 가이드 (INL handoff)
+
+처음 받는 분은 `INL_HANDOFF.md`를 먼저 보세요. 아래는 30분 안에 끝나는 acceptance test입니다.
+
+```bash
+# 0) 환경 (GPU 서버)
+./setup-pre.sh && ./setup-main.sh && ./setup-post.sh
+
+# 1) GPU 없이 task 로딩 검증
+make smoke
+
+# 2) 1-sample bounded run (작은 모델로 파이프라인 확인)
+LIMIT=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+LIMIT=1 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+
+# 3) 비교 스크립트 사용법
+python scripts/compare_gsma_leaderboard.py --help
+
+# 4) 전달 readiness 점검(문서/secret/용량/tree)
+make delivery-check
+```
+
+대표 full run / 비교는 위 Quick Start와 `INL_HANDOFF.md` 참조.
+
+### 대형 모델 실행 시 운영 변수
+
+| 변수 | 용도 |
+|---|---|
+| `BACKEND=vllm` / `TENSOR_PARALLEL_SIZE=2` / `VLLM_VISIBLE_DEVICES=a,b` | 24~33B 모델은 tp=2(2 GPU) |
+| `MAX_MODEL_LEN=8192` | 128K-context 모델 KV cache 초과 방지(프롬프트는 ≤1024 tok) |
+| `GPU_MEMORY_UTILIZATION=0.9` | 9B+ 모델 KV cache 확보(ot-lite 기본 0.5는 부족할 수 있음) |
+| `EXTRA_MODEL_ARGS=enable_thinking=False` | Qwen3 계열 추론 억제(단답 MC) |
+| `EXTRA_MODEL_ARGS=...,tokenizer_mode=mistral` | Mistral 계열 토크나이저 |
+| `HF_HUB_OFFLINE=1` + `NCCL_SOCKET_IFNAME=lo NCCL_IB_DISABLE=1` | 호스트에 VM이 떠 있어 NCCL/HF-hub in-process가 hang할 때(상세 `INL_HANDOFF.md`/`outputs/overnight-otfull-results.md`) |
+
+### 결과 해석 시 주의
+
+- 모든 비교는 **7-task unweighted task mean** vs public **unweighted**. sample-weighted group acc와 혼동 금지.
+- `_gsma`는 GSMA 공개 scoring contract에 정렬된 profile이며 **공식 GSMA 완전 재현이 아니다**(특히 MC는 자유 generation vs 공식 제약 디코딩으로 engine 미정렬).
+- non-leaderboard 모델은 public delta를 만들지 않고 internal 비교만 한다. reasoning/harmony(예 gpt-oss, R1-Distill)·일부 멀티모달은 단답 MC engine과 비호환 → collapse=artifact(능력치 아님).
+
+### 문서 map
+
+| 문서 | 용도 |
+|---|---|
+| `INL_HANDOFF.md` | **인수자 시작점** — 설치/실행/읽는 순서/체크리스트 |
+| `FINAL_DELIVERY_SUMMARY.md` | 한 장 요약(정체성·결과·한계) |
+| `RESULTS_MANIFEST.md` | 전달 산출물(결과 JSON·비교 MD) 위치/공유 안전 여부 |
+| `RELEASE_NOTES.md` | PR #1~#5 변경 이력 |
+| `PACKAGING_CHECKLIST.md` | 전달 전 점검 + release tag 명령 |
+| `outputs/overnight-otfull-results.md` | 최신 핵심 결과(ot-full 14종 full split) |
+| `outputs/model-candidate-plan-extended.md` | 확장 후보 pool + ot-lite 결과 |
+| `REPRODUCTION_NOTES.md` / `GSMA_SCORING_CONTRACT.md` | 재현 caveat / scoring contract |
+| `TASK_MANIFEST.md` / `HANDOFF.md` / `AGENTS.md` | task별 상세 / 배경 / 작업 규칙 |
+
 ## Codex Local And Cloud Workflow
 
 현재 GPU 서버 상태에 의존하는 작업은 Codex Local로 처리합니다. 예를 들어 CUDA,

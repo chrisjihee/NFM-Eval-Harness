@@ -78,8 +78,14 @@ scorer를 공식 `gsma-evals` 소스와 정렬한 비-default 그룹 `open_telco
 - teletables(default column) 낮음(표주입 경로 미설정); **`_gsma`/`_mcgen` teletables는 question-only=GSMA parity**. generation(telemath/3gpp) 여전히 낮음(별도 원인)
 - 결과: `results/otfull-gemma3-4b-vllm-1/` · 비교: `outputs/gemma3-4b-otfull-leaderboard-delta.md`
 
-## 미실행 / 다음 단계
+## 남은 필수 blocker
 
-- generation-budget 실험(`max_gen_toks`↑ + `until` 완화)로 telemath/3gpp 저점수 원인 확정.
-- TeleTables 원본 표(`TELETABLES_ROOT`) 확보 시 teletables 재측정.
+- 없음. (PR #5 기준 `open_telco_otfull_gsma` full split 14종 평가 완료.)
+
+## 선택적 후속 작업 (인수 후, 필요 시에만)
+
+- 신규 모델 추가 시 `open_telco_otlite_gsma` smoke → `open_telco_otfull_gsma` 순서로 확장.
+- reasoning/harmony 모델용 별도 non-GSMA diagnostic profile 설계.
+- legacy/internal teletables superset가 필요할 때만 `TELETABLES_ROOT` 사용.
+- generation-budget 실험으로 gemma 계열 telemath/telelogs emission 개선 탐색.
 - (선택) `*_mcgen` 공식 추출 방식 확인 시 default 승격 재검토(별도 승인).

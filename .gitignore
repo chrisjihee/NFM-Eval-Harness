@@ -198,3 +198,11 @@ results/**/*_samples_*.jsonl
 results/**/samples_*.jsonl
 results/**/*.log
 results/**/*.tmp
+
+# diagnostic / smoke runs (not delivery evidence — kept local only)
+results/smoke-*/
+results/conf-*/
+
+# internal dev artifacts (not part of the INL delivery bundle; kept local only)
+chat/
+lm-eval-ls-task

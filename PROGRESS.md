@@ -40,7 +40,7 @@
 - 결과 파일:
   `results/open_telco_otlite/google__gemma-3-4b-it/results_2026-05-15T15-40-57.791797.md`
 
-## 2026-06 패키징 pass (진행 중)
+## 2026-06 패키징 pass (완료)
 
 deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 `.omc/plans/nfm-eval-harness-consensus-plan.md`.
@@ -72,7 +72,7 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 - `hf`↔`vllm` parity OK. 비교 모델 `Qwen/Qwen2.5-7B-Instruct` baseline 확보.
 - 산출물: `outputs/gemma3-4b-leaderboard-delta.md`, `results/otlite-*-{2,maxlen8192,vllm-3}`, `results/otlite-qwen2.5-7b-hf-1`.
 
-## 2026-06-27 GSMA 공식 코드 정렬 pass (진행 중)
+## 2026-06-27 GSMA scoring contract 정렬 pass (완료)
 
 계획: `.omc/plans/gsma-alignment-consensus-plan.md`, spec: `.omc/specs/gsma-alignment-2026-06.md`.
 원칙: lm-eval 유지, additive only, default scoring 동결, "공식 GSMA 완전 재현" 미주장
@@ -100,12 +100,26 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 - 결론: ~−13.8%p 후보 격차의 거의 전부가 **scoring 방식 + 집계 차이**(ot-lite·ot-full 일관). "공식 재현" 아님(engine 미정렬).
 - 산출물: `outputs/gemma3-4b-{otlite,otfull}-gsma-delta.md`, `results/open_telco_{otlite,otfull}_gsma/`, `results/telelogs_gsma_hinted/`.
 
-## 다음 작업
+## 완료된 PR / milestone
 
-- **[critical 게이트]** legacy `open_telco_otfull_lm_eval_baseline` 추가 full run (사용자 승인 후) — public leaderboard와 같은 split. (현재 권장/기본 실행은 `open_telco_otfull_gsma`이며 이미 완료됨.)
-- generation-budget 실험(`max_gen_toks`↑ + `until` 완화)로 telemath/3gpp 저점수 원인 확정.
-- TeleTables 원본 표 데이터(`TELETABLES_ROOT`) 확보 시도 후 teletables 재측정.
-- (선택) `*_mcgen` 공식 추출 방식 확인 시 default 승격 재검토(별도 승인).
+- **PR #1** — 문서 통합 + GSMA 재현 진단(격차 = 집계 artifact).
+- **PR #2** — GSMA 공개 scoring contract 정렬(`*_gsma` profile; gemma3-4b ≈ public 0.397).
+- **PR #3** — 이름/실행경로 정리(`*_gsma` 기본화, legacy `*_lm_eval_baseline`, bare name fail-fast).
+- **PR #4** — 전달용 6모델 ot-lite 평가 + TeleMath/TeleTables 정정 + R1-Distill collapse artifact 규명.
+- **PR #5** — 확장 후보 검증(ot-lite 11종 + ot-full 14종 full-split; LB 전부 public 재현).
+
+## 남은 필수 blocker
+
+- 없음. (`open_telco_otfull_gsma` full split 14종 평가 완료, 전달 문서/manifest 정리 완료.)
+
+## 선택적 후속 작업 (인수 후, 필요 시에만)
+
+- 신규 모델 추가 시 `open_telco_otlite_gsma` smoke → `open_telco_otfull_gsma` 순서로 확장.
+- reasoning/harmony 모델용 별도 non-GSMA diagnostic profile 설계(현재는 단답 MC engine과 비호환 → artifact).
+- legacy/internal teletables superset가 필요할 때만 `TELETABLES_ROOT` 사용(GSMA `_gsma` 결과에는 불필요).
+- generation-budget 실험으로 gemma 계열 telemath/telelogs emission 개선 탐색.
+- (선택) `*_mcgen` 공식 추출 방식이 확인되면 default 승격 재검토(별도 승인 필요).
+- NFM 고유 task 확장(2차 과제 범위): telco Korean QA, intent-to-recipe, RCA, RAG-grounded QA.
 
 ## Handoff Notes
 
