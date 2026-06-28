@@ -1,6 +1,9 @@
 #!/bin/bash
-# 7. Clone LM-Evaluation-Harness
+# 7-1. Clone LM-Evaluation-Harness (for Task Execution)
 git clone https://github.com/EleutherAI/lm-evaluation-harness
+
+# 7-2. Clone GSMA-Evals (for Task Implementation)
+git clone https://github.com/gsma-labs/evals
 
 # 8. Link HF cache and login to HF
 shopt -s globstar
