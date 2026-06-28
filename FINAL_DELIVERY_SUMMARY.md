@@ -1,11 +1,12 @@
 # FINAL DELIVERY SUMMARY — NFM-Eval-Harness
 
 전달 대상: **지능네트워크연구실(Intelligent Network Lab)**
-작성: 2026-06-27 · 기준 브랜치: `nfm-final-delivery-2026-06`
+기준: `main` (PR #1~#5 merged, merge commit `7129050`) · 최종 갱신: 2026-06-28
 
 이 문서는 NFM-Eval-Harness를 전달 가능한 최종 검증판으로 정리한 한 장짜리 요약이다.
-배경/상세는 `HANDOFF.md`, `REPRODUCTION_NOTES.md`, `GSMA_SCORING_CONTRACT.md`,
-`TASK_MANIFEST.md`를 참조한다.
+- 인수자 빠른 시작: `INL_HANDOFF.md` · 전달 산출물 목록: `RESULTS_MANIFEST.md` · 전달 전 체크리스트: `PACKAGING_CHECKLIST.md` · 변경 이력: `RELEASE_NOTES.md`
+- 최신 핵심 결과(PR #5, ot-full 14종 full-split): `outputs/overnight-otfull-results.md` (§4b 요약)
+- 배경/상세: `HANDOFF.md`, `REPRODUCTION_NOTES.md`, `GSMA_SCORING_CONTRACT.md`, `TASK_MANIFEST.md`
 
 > **정체성(필독).** 이 저장소는 EleutherAI **lm-evaluation-harness 기반 내부 NFM-LLM baseline harness**이다.
 > 공식 GSMA leaderboard stack(Inspect AI 기반)의 완전 복제가 아니다. `_gsma` profile은
