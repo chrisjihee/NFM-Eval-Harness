@@ -1,11 +1,11 @@
 # NFM-Eval-Harness
 
 > **Repository role:** This is the engineering/provenance repository for NFM-Eval-Harness.
-> For INL handoff, onboarding, the 30-minute smoke test, and curated final results, use
+> For INL handoff, onboarding, the smoke test, and curated final results, use
 > **`NFM-Eval-Harness-delivery`** as the canonical handoff package.
 >
 > **저장소 역할:** 이 저장소는 개발·실험·증빙을 보존하는 engineering/provenance 저장소입니다.
-> 지능네트워크연구실 전달·인수·30분 smoke test·최종 결과 확인은 **`NFM-Eval-Harness-delivery`**를 정본으로 사용하세요.
+> 지능네트워크연구실 전달·인수·smoke test·최종 결과 확인은 **`NFM-Eval-Harness-delivery`**를 정본으로 사용하세요.
 
 `NFM-Eval-Harness`는 NFM-LLM baseline 평가를 위해 GSMA Open Telco benchmark
 task를 실행하는 가벼운 evaluation harness입니다. Open Telco `ot-lite`와
@@ -104,7 +104,7 @@ PR#2 결과 (gemma3-4b): `open_telco_otlite_gsma` 0.3992 / `open_telco_otfull_gs
 
 ## 인수자 가이드 (INL handoff)
 
-처음 받는 분은 **`NFM-Eval-Harness-delivery`** 저장소를 먼저 보세요. 아래는 30분 안에 끝나는 acceptance test입니다.
+처음 받는 분은 **`NFM-Eval-Harness-delivery`** 저장소를 먼저 보세요. 아래는 빠른 acceptance test입니다(아래 `python` 예시는 `.venv` 활성 상태를 가정).
 
 ```bash
 # 0) 환경 (GPU 서버)
@@ -118,8 +118,8 @@ LIMIT=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 # (경량/빠른 파이프라인 확인은 HF backend)
 LIMIT=1 BACKEND=hf MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 
-# 3) 비교 스크립트 사용법
-python scripts/compare_gsma_leaderboard.py --help
+# 3) 비교 스크립트 사용법 (.venv 미활성 시에도 안전하도록 .venv/bin 사용)
+.venv/bin/python scripts/compare_gsma_leaderboard.py --help
 
 # 4) 전달 readiness 점검(문서/secret/용량/tree)
 make delivery-check

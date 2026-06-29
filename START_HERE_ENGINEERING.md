@@ -4,7 +4,7 @@ This repository (`NFM-Eval-Harness`) is the **engineering/provenance repository*
 development history, intermediate experiments, and diagnostic outputs live here.
 
 > **INL handoff:** Use **`NFM-Eval-Harness-delivery`** as the canonical handoff package
-> for onboarding, the 30-minute smoke test, and curated final results.
+> for onboarding, the smoke test, and curated final results.
 > `HANDOFF_POINTER.md` and `INL_HANDOFF.md` have been removed; all handoff content
 > now lives in `NFM-Eval-Harness-delivery`.
 

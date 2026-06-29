@@ -350,6 +350,13 @@ open_telco_full_3gpp_tsg_lm_eval_baseline
 
 > `scripts/`, `tests/`, `Makefile`은 현재 모두 부재 → 신규 생성 대상이다. `AGENTS.md`는 단일 진입점으로 **유지**한다.
 
+> **구현 결과 정정(2026-06 이후):** 위 §7/§8/Phase 3·4는 당시 consensus plan 스냅샷이며, 실제 전달된
+> 형태는 일부 다르다 — 테스트는 `tests/test_gsma_parsers.py`/`test_mc_gen.py`/`test_parsers_characterization.py`로
+> 분할되었다(계획의 단일 `tests/test_parsers.py` 대신). scoring sensitivity는 별도 `scripts/scoring_ablation.py`
+> 대신 비-default `*_mcgen` task family + `tests/test_mc_gen.py`로 갈음했다(해당 스크립트는 생성하지 않음).
+> `Makefile` 타깃은 `smoke` / `delivery-check` / `test`(=`.venv/bin/python -m pytest -q tests/`)다. AI
+> 코딩-에이전트 문서는 이후 `AGENTS.md`·`FIRST_PROMPT.md`를 제거하고 `CLAUDE.md`로 단일화했다(현재 Claude 단독).
+
 ---
 
 ## 8. 이번 pass 결정 사항 (consensus plan APPROVED — 본 블록 우선)
