@@ -44,27 +44,29 @@ Run from repository root:
 
 `setup-main.sh` creates `.venv`, installs project dependencies, and configures vLLM runtime libraries. It also generates a pip-list snapshot (`version-dep.txt`) as an optional local artifact — this file is not tracked in git.
 
-## LM-Evaluation-Harness pin
+## LM-Evaluation-Harness (lm_eval) install
 
-The vendored clone `lm-evaluation-harness/` is pinned to:
-
-```text
-sha 97a5e2c7  (git describe: v0.4.12-12-g97a5e2c7)
-```
-
-Install it editable, without dependencies, so the hard-pinned torch / vllm / transformers
-versions in `pyproject.toml` are not overwritten:
+`setup-post.sh` installs `lm_eval` version-pinned from PyPI:
 
 ```bash
-uv pip install -e ./lm-evaluation-harness --no-deps
+uv pip install "lm_eval[hf,vllm]==0.4.12"
 ```
 
-Note: the current `.venv` may not have `lm_eval` installed (verified absent during this
-documentation pass). Install it before any run:
+The `[hf,vllm]` extras pull both backends and lm_eval's helper deps automatically.
+`setup-main.sh` installs the hard-pinned torch / vllm / transformers first, so this
+command leaves those already-satisfied pins untouched (uv does not downgrade them).
+
+Verify before any run:
 
 ```bash
-.venv/bin/python -c "import lm_eval" || uv pip install -e ./lm-evaluation-harness --no-deps
+.venv/bin/python -c "import lm_eval; print(lm_eval.__version__)"
+.venv/bin/python -c "import lm_eval" || uv pip install "lm_eval[hf,vllm]==0.4.12"
 ```
+
+> Provenance: the historical engineering env installed lm_eval as an editable clone
+> pinned to SHA `97a5e2c7` (= `v0.4.12` +12 commits; the current `.venv` reports
+> `0.4.13.dev0`). The delivery and the prescribed install now use PyPI `0.4.12`;
+> recorded results reproduce within run-to-run variance.
 
 ## Important dependency notes
 
@@ -107,22 +109,24 @@ quick check, use `LIMIT=5` instead of `CONFIRM_FULL_RUN=1` (see "Recommended smo
 Omitting `TASKS` runs the default `*_gsma` group. To run the legacy lm-eval baseline,
 set `TASKS=open_telco_otlite_lm_eval_baseline` (or `..._otfull_lm_eval_baseline`).
 
-`ot-lite_gsma` (default) with HF backend:
+The default backend is vLLM (run scripts set `MAX_MODEL_LEN=8192` and
+`GPU_MEMORY_UTILIZATION=0.9` by default). `ot-lite_gsma` (default task):
 
 ```bash
 CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
-`ot-full_gsma` (default) with HF backend:
+`ot-full_gsma` (default task):
 
 ```bash
 CONFIRM_FULL_RUN=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otfull.sh
 ```
 
-`ot-lite_gsma` (default) with vLLM backend:
+HF backend (lightweight fallback; it left-truncates long generation inputs, so prefer
+vLLM for faithful scoring):
 
 ```bash
-CONFIRM_FULL_RUN=1 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+CONFIRM_FULL_RUN=1 BACKEND=hf MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
 ## Recommended smoke tests

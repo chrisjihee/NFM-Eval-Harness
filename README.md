@@ -38,7 +38,7 @@ GPU 서버 환경 준비:
 
 ### 권장 실행 (GSMA-compatible 기본 profile)
 
-run 스크립트의 기본 task는 `_gsma` profile이므로 **TASKS를 생략하면 자동으로 GSMA-compatible profile이 실행**됩니다. 이 profile은 7-task unweighted 평균을 사용하며 public leaderboard와 비교 가능합니다.
+run 스크립트의 기본 task는 `_gsma` profile이므로 **TASKS를 생략하면 자동으로 GSMA-compatible profile이 실행**됩니다. 이 profile은 7-task unweighted 평균을 사용하며 public leaderboard와 비교 가능합니다. 기본 backend는 **vLLM**입니다(run 스크립트가 `MAX_MODEL_LEN=8192`·`GPU_MEMORY_UTILIZATION=0.9`를 기본 적용). HF backend(`BACKEND=hf`)는 긴 생성형 입력을 left-truncation 하므로 경량/대체용입니다.
 
 `ot-lite` (기본 = `open_telco_otlite_gsma`):
 
@@ -110,9 +110,10 @@ PR#2 결과 (gemma3-4b): `open_telco_otlite_gsma` 0.3992 / `open_telco_otfull_gs
 # 1) GPU 없이 task 로딩 검증
 make smoke
 
-# 2) 1-sample bounded run (작은 모델로 파이프라인 확인)
+# 2) 1-sample bounded run (작은 모델로 파이프라인 확인; 기본 backend = vLLM)
 LIMIT=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
-LIMIT=1 BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+# (경량/빠른 파이프라인 확인은 HF backend)
+LIMIT=1 BACKEND=hf MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 
 # 3) 비교 스크립트 사용법
 python scripts/compare_gsma_leaderboard.py --help
@@ -128,8 +129,8 @@ make delivery-check
 | 변수 | 용도 |
 |---|---|
 | `BACKEND=vllm` / `TENSOR_PARALLEL_SIZE=2` / `VLLM_VISIBLE_DEVICES=a,b` | 24~33B 모델은 tp=2(2 GPU) |
-| `MAX_MODEL_LEN=8192` | 128K-context 모델 KV cache 초과 방지(프롬프트는 ≤1024 tok) |
-| `GPU_MEMORY_UTILIZATION=0.9` | 9B+ 모델 KV cache 확보(ot-lite 기본 0.5는 부족할 수 있음) |
+| `MAX_MODEL_LEN=8192` | **run 스크립트 기본값**. 128K-context 모델 KV cache 초과 방지(bundled task 프롬프트는 8192 미만) |
+| `GPU_MEMORY_UTILIZATION=0.9` | **run 스크립트 기본값**. 9B+ 모델 KV cache 확보 |
 | `EXTRA_MODEL_ARGS=enable_thinking=False` | Qwen3 계열 추론 억제(단답 MC) |
 | `EXTRA_MODEL_ARGS=...,tokenizer_mode=mistral` | Mistral 계열 토크나이저 |
 | `HF_HUB_OFFLINE=1` + `NCCL_SOCKET_IFNAME=lo NCCL_IB_DISABLE=1` | 호스트에 VM이 떠 있어 NCCL/HF-hub in-process가 hang할 때(상세 `docs/HANDOFF.md`/`outputs/overnight-otfull-results.md`) |

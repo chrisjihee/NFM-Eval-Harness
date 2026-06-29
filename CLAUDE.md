@@ -127,9 +127,10 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 ## 환경 주의 (GPU 작업 전 필수)
 
 - GPU: **A100 40GB ×6** 가용. gemma3-4b는 단일 GPU로 충분.
-- `lm-evaluation-harness/`(pin sha **`97a5e2c7`** = `97a5e2c710e2b56b9dd48f367bb6fe87bbb2c176`)는 `setup-post.sh`가 clone·editable 설치한다(`--no-deps` + lm-eval core deps). `.venv`에 미설치이면 `make smoke`가 설치 명령을 안내한다. 재설치 SOP는 `docs/ENVIRONMENT.md` 참조.
-- 환경 하드핀: Python 3.12.13, torch 2.11.0+cu128, transformers 5.12.1, vllm 0.23.0.
-- **vLLM은 CUDA forward-compat에 의존**한다 → GPU 작업 전 `.venv` activate가 필수다(run 스크립트는 activate를 수행함). 미적용 시 vLLM generate가 실패할 수 있으며 hf fallback을 사용한다.
+- lm-evaluation-harness(`lm_eval`)는 `setup-post.sh`가 PyPI에서 버전 고정으로 설치한다: `uv pip install "lm_eval[hf,vllm]==0.4.12"`(`[hf,vllm]` extra가 보조 deps 자동 설치, setup-main.sh의 torch/vllm/transformers 하드핀은 불변). `.venv`에 미설치이면 `make smoke`가 설치 명령을 안내한다. 재설치 SOP는 `docs/ENVIRONMENT.md` 참조. (과거 engineering 트랙은 git clone + SHA `97a5e2c7`=`v0.4.12`+12 commits를 editable `--no-deps`로 설치했고, 현재 `.venv`는 그 환경(`0.4.13.dev0`)이다 — 결과는 PyPI 0.4.12와 run-to-run 변동 범위 내 동일.)
+- 환경 하드핀: Python 3.12.13, torch 2.11.0+cu128, transformers 5.12.1, vllm 0.23.0, lm_eval 0.4.12.
+- **기본 backend = vLLM**(run 스크립트 기본값; `MAX_MODEL_LEN=8192`·`GPU_MEMORY_UTILIZATION=0.9` 기본 적용). HF backend(`BACKEND=hf`)는 긴 생성형 입력을 left-truncation 하여 telelogs 등 생성형 task가 collapse할 수 있으므로 경량/대체용이다.
+- **vLLM은 CUDA forward-compat에 의존**한다 → GPU 작업 전 `.venv` activate가 필수다(run 스크립트는 activate를 수행함). 미적용 시 vLLM generate가 실패할 수 있으며 그때만 `BACKEND=hf` fallback을 쓴다.
 - dataset 로컬 캐시 없음(첫 run에서 다운로드). HF 접근: user=chrisjihee, org=etri-lirs (gemma/llama/qwen 접근 가능).
 
 ## GPU 실행 프로토콜 (smoke-first + 단계 승인)
@@ -137,7 +138,7 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 긴 run은 **항상 1장 smoke / bounded `LIMIT` → 예상 시간·GPU 수·측정 sample count·출력 경로 보고 → 승인 → 확대**한다.
 
 - run 스크립트는 `--apply_chat_template`가 **항상 ON**이다. 따라서 chat template 효과를 보려면 끄거나 비교하는 형태로 실험한다.
-- `run_open_telco_*.sh`의 주요 env: `MODEL_NAME` / `BACKEND`(hf|vllm) / `DEVICE` / `BATCH_SIZE` / `TASKS` / `VLLM_VISIBLE_DEVICES` / `GPU_MEMORY_UTILIZATION` / `MAX_MODEL_LEN` / `TENSOR_PARALLEL_SIZE`.
+- `run_open_telco_*.sh`의 주요 env: `MODEL_NAME` / `BACKEND`(기본 `vllm`; `hf`는 경량/대체) / `DEVICE`(hf 전용) / `BATCH_SIZE` / `TASKS` / `VLLM_VISIBLE_DEVICES` / `GPU_MEMORY_UTILIZATION`(기본 0.9) / `MAX_MODEL_LEN`(기본 8192) / `TENSOR_PARALLEL_SIZE`.
 - `TELETABLES_ROOT`는 run 스크립트가 set하지 않는다. 기본 `_gsma` profile은 question+choices parity로 평가하므로 저평가가 아니다 — legacy/superset 표 원본이 필요할 때만 별도 export(기본 경로엔 불필요).
 
 > **task name 규칙 재확인.** run script 기본값(TASKS 생략)은 `_gsma`(기본/권장). bare `open_telco_otlite`/`open_telco_otfull`은 rename되어 실행 불가(run script `exit 2`). legacy lm-eval baseline은 `_lm_eval_baseline` suffix를 명시해야 한다(diagnostic only).
@@ -149,14 +150,14 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 # GPU 없이 task 로딩 검증 (smoke)
 make smoke
 
-# 기본(권장) ot-lite_gsma 단일-task bounded run (HF) — leaf task name도 _mcgen/_gsma suffix
-MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_teleqna_mcgen DEVICE=cuda:0 LIMIT=5 ./run_open_telco_otlite.sh
+# 기본(권장) ot-lite_gsma 단일-task bounded run (기본 backend = vLLM) — leaf task name도 _mcgen/_gsma suffix
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_teleqna_mcgen LIMIT=5 ./run_open_telco_otlite.sh
 
-# 기본(권장) ot-lite_gsma 전체 (TASKS 생략 시 기본값 = open_telco_otlite_gsma; full run은 승인 플래그 필요)
+# 기본(권장) ot-lite_gsma 전체 (TASKS 생략 시 기본값 = open_telco_otlite_gsma; 기본 backend = vLLM; full run은 승인 플래그 필요)
 MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
 
-# vLLM 백엔드 (.venv activate 보장 위해 run 스크립트 경유; TASKS 생략 시 기본 _gsma)
-BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
+# HF 백엔드 (경량/대체; 긴 입력 left-truncation 주의)
+BACKEND=hf MODEL_NAME=google/gemma-3-4b-it CONFIRM_FULL_RUN=1 ./run_open_telco_otlite.sh
 
 # (diagnostic only) legacy lm-eval/loglikelihood baseline — 명시적으로 _lm_eval_baseline 지정
 MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_lm_eval_baseline CONFIRM_FULL_RUN=1 \
@@ -164,7 +165,7 @@ MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_lm_eval_baseline CONFIRM
 
 # GSMA 정렬 그룹 — 기본값이므로 TASKS 생략 가능, 명시도 동일(run 스크립트는 --include_path로 신규 YAML 자동 발견)
 # 1) ot-lite_gsma smoke (HARD gate: drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율 측정)
-MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma DEVICE=cuda:0 LIMIT=20 \
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma LIMIT=20 \
   OUTPUT_PATH=results/open_telco_otlite_gsma_smoke ./run_open_telco_otlite.sh
 # 2) 게이트 통과 후 ot-lite_gsma full
 MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma CONFIRM_FULL_RUN=1 \

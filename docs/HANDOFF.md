@@ -135,7 +135,7 @@ check_vllm_runtime.py / lm-eval-ls-task
 results/  outputs/  docs/
 ```
 - 언어 구성: Python / Shell 중심.
-- HF 백엔드, vLLM 백엔드 모두 지원. `BACKEND=vllm ... ./run_...sh`
+- 기본 backend = vLLM(플래그 불필요). HF(`BACKEND=hf`)는 경량/대체(긴 생성형 입력 left-truncation).
 - 두 run 스크립트 모두 `--apply_chat_template` 항상 ON, `.venv` activate 수행.
 
 ### 3.2 정확한 task 인벤토리 (정정 반영 + 2026-06 RENAME)
@@ -232,8 +232,8 @@ open_telco_full_3gpp_tsg_lm_eval_baseline
 - HF 7-task run에서 left-truncation(2902→2024 tokens) 다발 → 생성형 저점수의 후보 원인.
 
 #### run 스크립트 env
-`MODEL_NAME` / `DEVICE` / `BATCH_SIZE` / `TASKS` / `BACKEND`(hf|vllm) / `VLLM_VISIBLE_DEVICES` /
-`GPU_MEMORY_UTILIZATION` / `MAX_MODEL_LEN` / `TENSOR_PARALLEL_SIZE`.
+`MODEL_NAME` / `DEVICE`(hf 전용) / `BATCH_SIZE` / `TASKS` / `BACKEND`(기본 `vllm`; `hf`는 경량/대체) / `VLLM_VISIBLE_DEVICES` /
+`GPU_MEMORY_UTILIZATION`(기본 0.9) / `MAX_MODEL_LEN`(기본 8192) / `TENSOR_PARALLEL_SIZE`.
 **`TELETABLES_ROOT`는 스크립트가 set하지 않는다** → teletables 표 컨텍스트가 필요하면 별도 export 해야 한다.
 
 ### 3.3 검증된 baseline 실행 (EXPERIMENTS.md, 2026-05-15) — historical pre-rename run
@@ -318,11 +318,10 @@ open_telco_full_3gpp_tsg_lm_eval_baseline
   `TELETABLES_ROOT`가 미설정이라, 모델이 metadata + choices만 보고 표 본문을 못 본다 → **metadata-only 저평가**.
   ot-full teletables 점수는 "lower bound under teletables degradation"으로 라벨한다. 원본 확보 시도 결과를 문서화한다.
 - **생성형 left-truncation**: HF run에서 `Left truncation applied. Original sequence length was 2902, truncating to last 2024 tokens.`
-  경고 다발 → TeleLogs 등 long-context 입력 파손. max context length / model args / prompt length 점검 필요.
-- **lm_eval upstream main unpinned**: 설치본 sha = `97a5e2c710e2b56b9dd48f367bb6fe87bbb2c176`(2026-06-25 확인).
-  upstream main이 unpinned이라 변동 위험이 있고, **현재 `.venv`에 lm_eval가 미설치 상태일 수 있다.**
-  pin 재설치 시 transformers 5.12.1 / vllm 0.23.0 하드핀과 충돌 위험 → 재설치 후 `make smoke`(GPU 0) 검증 게이트 통과,
-  실패 시 현재 sha로 즉시 롤백(SOP는 `ENVIRONMENT.md`).
+  경고 다발 → TeleLogs 등 long-context 입력 파손. **기본 backend를 vLLM(+`MAX_MODEL_LEN=8192`)으로 두어 이를 회피한다**(HF는 경량/대체 fallback이며, 쓸 경우 `MAX_LENGTH` 상향으로 완화).
+- **lm_eval 버전 고정 (변동 위험 해소)**: `setup-post.sh`가 PyPI `0.4.12`로 고정 설치한다(`uv pip install "lm_eval[hf,vllm]==0.4.12"`).
+  과거엔 upstream을 unpinned editable로 설치(sha `97a5e2c7`=`v0.4.12`+12 commits; 현재 `.venv`는 `0.4.13.dev0`)해 변동 위험이 있었다.
+  setup-main.sh가 torch/vllm/transformers 하드핀을 선설치하므로 lm_eval 설치가 이를 덮지 않는다. 재설치 후 `make smoke`(GPU 0) 게이트로 검증(SOP는 `ENVIRONMENT.md`).
 - **vLLM CUDA forward-compat 의존**: vLLM 0.23.0가 cuda forward-compat(cuda-compat-13.3)에 의존해 취약하다.
   반드시 `.venv` activate 후 실행(run 스크립트가 activate 수행). 실패 시 hf backend로 fallback.
 - **3gpp_tsg ValueError 위험**: core4 전용 MC 변형 `doc_to_target_3gpp_tsg`의 `THREE_GPP_LABELS.index` (§3.2 참조).
@@ -337,7 +336,7 @@ open_telco_full_3gpp_tsg_lm_eval_baseline
 - `TASK_MANIFEST.md` — 실제 task YAML/parser와 정합 필요(미존재 스크립트 참조 제거, `max_gen_toks` drift,
   per-task `metadata.version` 표, "unweighted mean" 오기 정정, otfull importlib 결합 명시).
 - `REPRODUCTION_NOTES.md` — 집계방식 정정(0.259 vs 0.397 ≈ −13.8%p 후보 격차, 3요소 귀인 명기).
-- `ENVIRONMENT.md` — lm_eval pin sha + 재설치 SOP + provisional caveat.
+- `ENVIRONMENT.md` — lm_eval 버전 고정(pip 0.4.12) 설치 + 재설치 SOP.
 - `TROUBLESHOOTING.md` — 반복 오류와 해결.
 - `PROGRESS.md` / `EXPERIMENTS.md` / `outputs/latest-summary.md`(+`outputs/run-index.jsonl`) — 의미 있는 run 후 갱신.
 
@@ -409,7 +408,7 @@ open_telco_full_3gpp_tsg_lm_eval_baseline
 
 ```bash
 # 1) ot-lite_gsma smoke (HARD gate): drift guard + boxed/WG emission-rate ≥ 0.30 + cap-hit율
-MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma DEVICE=cuda:0 LIMIT=20 \
+MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma LIMIT=20 \
   OUTPUT_PATH=results/open_telco_otlite_gsma_smoke ./run_open_telco_otlite.sh
 # 2) 게이트 통과 후 full
 MODEL_NAME=google/gemma-3-4b-it TASKS=open_telco_otlite_gsma CONFIRM_FULL_RUN=1 \
@@ -471,9 +470,10 @@ raw prompt + 약/base 모델에서 점수가 collapse(~0)할 수 있다(원인·
 
 ## 11. 환경
 - GPU: 최대 6장(A100 40GB) 가용. 10B 이하 모델 검증 중. gemma3-4b는 단일 GPU로 충분.
-- Python 3.12.13, uv 0.11.23, `.venv` editable.
-- 하드핀: torch 2.11.0+cu128 / transformers 5.12.1 / vllm 0.23.0.
-- **lm_eval = upstream main git clone(unpinned), 설치본 sha `97a5e2c...`(미설치 상태일 수 있음 — §6 참조).**
+- Python 3.12.13, uv 0.11.23, `.venv`.
+- 하드핀: torch 2.11.0+cu128 / transformers 5.12.1 / vllm 0.23.0 / lm_eval 0.4.12.
+- **lm_eval = `setup-post.sh`가 PyPI에서 고정 설치(`uv pip install "lm_eval[hf,vllm]==0.4.12"`).**
+  (과거 트랙은 upstream main git clone(unpinned) editable, sha `97a5e2c...`; 현재 `.venv`는 `0.4.13.dev0` — §6 참조.)
   fork된 `group.py`/`metrics.py`가 자체 aggregation 수행(sample-weighted group acc의 원인).
 - 데이터셋 로컬 캐시 없음(첫 run 다운로드). HF 접근: user=chrisjihee, org=etri-lirs(gemma/llama/qwen 접근 가능).
 - **transformers 버전이 최신 모델 지원을 좌우**하므로 새 모델 평가 시 버전 확인 필요. GGUF 양자화 모델도 lm-eval로 평가 가능.

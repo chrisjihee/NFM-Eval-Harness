@@ -151,10 +151,10 @@ Then retry.
 
 ## 9. Out-of-memory
 
-Try:
+Try (HF backend):
 
 ```bash
-BATCH_SIZE=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
+BACKEND=hf BATCH_SIZE=1 MODEL_NAME=google/gemma-3-4b-it ./run_open_telco_otlite.sh
 ```
 
 For vLLM:

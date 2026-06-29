@@ -24,7 +24,11 @@
 
 ## LM-Evaluation-Harness
 
-- 설치
+> **이 프로젝트의 설치**: `setup-post.sh`가 PyPI에서 버전 고정으로 설치한다 —
+> `uv pip install "lm_eval[hf,vllm]==0.4.12"`. 아래 git clone/editable 방식은
+> upstream 일반 참고용이며, 본 저장소의 권장 설치는 위 pinned pip 명령이다.
+
+- 설치 (upstream 일반 참고)
 
 ```bash
 git clone --depth 1 https://github.com/EleutherAI/lm-evaluation-harness
@@ -32,7 +36,7 @@ cd lm-evaluation-harness
 pip3 install -e .
 ```
 
-- 설치
+- 설치 (upstream 일반 참고 — 본 저장소 권장 설치는 위의 pinned `uv pip install "lm_eval[hf,vllm]==0.4.12"`)
 
 ```bash
 pip3 install "lm_eval[hf]"
@@ -233,22 +237,23 @@ CONFIRM_FULL_RUN=1 \
 `*_gsma` 기본). 빠른 확인은 `CONFIRM_FULL_RUN=1` 대신 `LIMIT=5` 를 사용하세요.
 
 ```bash
+# 기본/권장: vLLM (기본 backend; MAX_MODEL_LEN=8192·GPU_MEMORY_UTILIZATION=0.9 기본 적용)
+CONFIRM_FULL_RUN=1 \
+  VLLM_VISIBLE_DEVICES=3 \
+  MODEL_NAME=google/gemma-3-4b-it \
+  BATCH_SIZE=4 \
+  OUTPUT_PATH=results/otfull-gemma3-4b-vllm \
+  ./run_open_telco_otfull.sh
+```
+
+```bash
+# 경량/대체: HF backend (긴 생성형 입력을 left-truncation → 대표 측정에는 vLLM 사용)
 CONFIRM_FULL_RUN=1 \
   BACKEND=hf \
   DEVICE=cuda:0 \
   MODEL_NAME=google/gemma-3-4b-it \
   BATCH_SIZE=4 \
   OUTPUT_PATH=results/otfull-gemma3-4b-hf \
-  ./run_open_telco_otfull.sh
-```
-
-```bash
-CONFIRM_FULL_RUN=1 \
-  BACKEND=vllm \
-  VLLM_VISIBLE_DEVICES=3 \
-  MODEL_NAME=google/gemma-3-4b-it \
-  BATCH_SIZE=4 \
-  OUTPUT_PATH=results/otfull-gemma3-4b-vllm \
   ./run_open_telco_otfull.sh
 ```
 

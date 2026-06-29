@@ -32,6 +32,25 @@
   구조적으로 붕괴(artifact, 능력치 아님). 후보 계획은 `outputs/model-candidate-plan.md`. TeleTables `_gsma`=question-only
   =GSMA parity(저평가 아님), TeleMath 문서 max_gen_toks per-task(1024/256) 정정.
 
+## 2026-06-29 — 설치/런타임 정리 (delivery와 sync)
+
+전달본(`NFM-Eval-Harness-delivery`)과 동일하게 두 가지를 정리했다(history rewrite 없이 새 commit):
+
+- **lm_eval 설치 = 버전 고정 pip**: `setup-post.sh`가 `uv pip install "lm_eval[hf,vllm]==0.4.12"`로
+  설치한다. lm-evaluation-harness git clone(중복)은 제거하고, gsma-evals는 선택적 참조 clone으로만
+  둔다(런타임 의존성 아님 — scorer는 utils.py 미러). `[hf,vllm]` extra가 보조 deps를 자동 설치하므로
+  과거의 `--no-deps` + 보조 6종 수동 단계는 불필요하다. (과거 트랙은 SHA `97a5e2c7`=`v0.4.12`+12 commits
+  editable; 현재 `.venv`는 `0.4.13.dev0`. 결과는 PyPI 0.4.12와 run-to-run 변동 범위 내 동일.)
+- **기본 backend = vLLM**: `run_open_telco_*.sh`의 기본값을 `hf`→`vllm`로 바꾸고, vLLM 기본값
+  `MAX_MODEL_LEN=8192`·`GPU_MEMORY_UTILIZATION=0.9`를 적용했다. HF는 긴 생성형 입력을 left-truncation
+  하여 telelogs 등이 0점으로 collapse(예: gemma-3-4b-it ot-lite_gsma HF telelogs 0.0 vs vLLM 0.12)
+  → 경량/대체(`BACKEND=hf`)로 강등.
+- 갱신 파일: `setup-post.sh`, `run_open_telco_{otlite,otfull}.sh`, `scripts/smoke_test.sh`,
+  `CLAUDE.md`, `README.md`, `docs/ENVIRONMENT.md`, `docs/TROUBLESHOOTING.md`,
+  `docs/lm-evaluation-harness-reference.md`, `docs/HANDOFF.md`, `open_telco_lm_eval/README.md`.
+  검증: `bash -n`, `make smoke`(전 task 로딩), 잔여 패턴 grep. 이 변경은 설치/실행 경로만 바꾸며
+  기존 결과 수치를 재측정하지 않는다.
+
 ## 최근 Baseline
 
 - 날짜: 2026-05-15
