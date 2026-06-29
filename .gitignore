@@ -204,7 +204,8 @@ results/smoke-*/
 results/conf-*/
 
 # internal dev artifacts (not part of the INL delivery bundle; kept local only)
-chat/
+chat/*
+!chat/CLAUDE_WORKLOG.md
 lm-eval-ls-task
 version-dep.txt
 
