@@ -4,7 +4,7 @@
 
 이 문서는 NFM-Eval-Harness `_gsma` profile(GSMA 공개 scoring contract 정렬, 기본 실행 경로)로
 평가한 **후보 모델 목록과 접근성/실행 메타데이터**를 정리한다. 점수 결과 요약은
-`FINAL_DELIVERY_SUMMARY.md`와 모델별 `outputs/*-otlite-gsma-delta.md`에 있다.
+`NFM-Eval-Harness-delivery`(docs/04-final-results.md)와 모델별 `outputs/*-otlite-gsma-delta.md`에 있다.
 
 > 모든 평가는 **ot-lite_gsma full**(7-task, unweighted task mean)로 통일했다. 신규 모델의
 > ot-full 신규 실행은 이번 범위 밖이다(ot-full 동일-split 직접비교는 기존 gemma-3-4b 결과로 유지).

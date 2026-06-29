@@ -1,7 +1,7 @@
 # CLAUDE.md — NFM-Eval-Harness 작업 지침
 
 이 파일은 Claude Code가 이 저장소에서 작업할 때 자동으로 읽는 프로젝트 지침이다.
-배경 맥락과 현재 상태는 `HANDOFF.md`에 있다. 먼저 그 문서를 읽고 이 지침으로 돌아온다.
+배경 맥락과 현재 상태는 `docs/HANDOFF.md`에 있다. 먼저 그 문서를 읽고 이 지침으로 돌아온다.
 agent 공통 작업 규칙의 단일 진입점은 `AGENTS.md`이며 본 지침과 함께 유지된다.
 
 ---
@@ -24,17 +24,17 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 ## 읽을 순서 (코딩 전에)
 
 1. `README.md`
-2. `HANDOFF.md` — 현재 상태/완료·진행·다음/GPU 승인 프로토콜/결과 위치/알려진 위험.
+2. `docs/HANDOFF.md` — 현재 상태/완료·진행·다음/GPU 승인 프로토콜/결과 위치/알려진 위험.
 3. `AGENTS.md` — agent 작업 규칙 단일 진입점.
-4. `REPRODUCTION_NOTES.md` — local 결과와 GSMA public leaderboard 관계, 집계방식 정정.
-5. `TASK_MANIFEST.md` — task별 dataset/split/output type/metric/parser/알려진 이슈.
-6. `ENVIRONMENT.md` — 환경·`lm_eval` pin·재설치 절차.
-7. `TROUBLESHOOTING.md` — 알려진 장애 및 회피.
-8. `PLAN.md`, `PROGRESS.md`, `EXPERIMENTS.md`, `outputs/latest-summary.md`, `open_telco_lm_eval/README.md`.
+4. `docs/REPRODUCTION_NOTES.md` — local 결과와 GSMA public leaderboard 관계, 집계방식 정정.
+5. `docs/TASK_MANIFEST.md` — task별 dataset/split/output type/metric/parser/알려진 이슈.
+6. `docs/ENVIRONMENT.md` — 환경·`lm_eval` pin·재설치 절차.
+7. `docs/TROUBLESHOOTING.md` — 알려진 장애 및 회피.
+8. `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/EXPERIMENTS.md`, `outputs/latest-summary.md`, `open_telco_lm_eval/README.md`.
 
 새 세션 문맥 회복의 최단 경로는 `FIRST_PROMPT.md`에 정리되어 있다(읽을 순서: AGENTS → CLAUDE → HANDOFF → REPRODUCTION_NOTES → TASK_MANIFEST).
 
-통합 후 문서 체계: `CLAUDE.md` / `HANDOFF.md` / `FIRST_PROMPT.md` / `TASK_MANIFEST.md` / `REPRODUCTION_NOTES.md` / `ENVIRONMENT.md` / `TROUBLESHOOTING.md`. (기존 `*-claude.md` / `*-gpt.md` 분리본은 통합되어 삭제 대상이다.)
+문서 체계: `CLAUDE.md` / `docs/HANDOFF.md` / `FIRST_PROMPT.md` / `docs/TASK_MANIFEST.md` / `docs/REPRODUCTION_NOTES.md` / `docs/ENVIRONMENT.md` / `docs/TROUBLESHOOTING.md`.
 
 그다음 코드를 본다.
 - `run_open_telco_otlite.sh`, `run_open_telco_otfull.sh`, `setup-pre.sh` / `setup-main.sh` / `setup-post.sh`
@@ -48,7 +48,7 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 
 | Task group | 현재 이름 | 구성 | 비고 |
 |---|---|---|---|
-| **기본/권장 (GSMA-compatible)** | `open_telco_otlite_gsma` / `open_telco_otfull_gsma` | 7-task: MC 4종 `*_mcgen`(teletables 포함) + 생성형 3종 `*_gsma` | run script 기본값(TASKS 생략 시 실행). leaderboard 비교 가능. scorer만 공식(`gsma-evals`) 정렬, engine은 미정렬(특히 MC). unweighted(`weight_by_size: false`). 상세는 `GSMA_SCORING_CONTRACT.md` |
+| **기본/권장 (GSMA-compatible)** | `open_telco_otlite_gsma` / `open_telco_otfull_gsma` | 7-task: MC 4종 `*_mcgen`(teletables 포함) + 생성형 3종 `*_gsma` | run script 기본값(TASKS 생략 시 실행). leaderboard 비교 가능. scorer만 공식(`gsma-evals`) 정렬, engine은 미정렬(특히 MC). unweighted(`weight_by_size: false`). 상세는 `docs/GSMA_SCORING_CONTRACT.md` |
 | legacy baseline (diagnostic only) | `open_telco_otlite_lm_eval_baseline` | 7-task: `open_telco_teleqna_lm_eval_baseline` / `…_teletables…` / `…_oranbench…` / `…_srsranbench…` / `…_telemath…` / `…_telelogs…` / `open_telco_3gpp_tsg_gen_lm_eval_baseline` | 3gpp 그룹은 **생성형** `open_telco_3gpp_tsg_gen_lm_eval_baseline`. lm-eval/loglikelihood baseline(과거 default). |
 | legacy baseline (diagnostic only) | `open_telco_otlite_core4_lm_eval_baseline` | legacy 4-task MC | MC 변형 `open_telco_3gpp_tsg_lm_eval_baseline`는 **이 legacy core4 전용** |
 | legacy baseline (diagnostic only) | `open_telco_otfull_lm_eval_baseline` | `open_telco_full_*_lm_eval_baseline` 7-task | `utils.py`가 ot-lite utils를 importlib로 재노출 |
@@ -63,7 +63,7 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 MC task(legacy: `teleqna_lm_eval_baseline` / `teletables_lm_eval_baseline` / `oranbench_lm_eval_baseline` / `srsranbench_lm_eval_baseline`)는 `output_type: multiple_choice` → loglikelihood scoring.
 생성형 task(legacy: `telemath_lm_eval_baseline` / `telelogs_lm_eval_baseline` / `3gpp_tsg_gen_lm_eval_baseline`)는 `generate_until`, 전부 `until: ["\n"]`, `do_sample=false`, `max_gen_toks`는 telemath **48** / telelogs **24** / 3gpp_tsg_gen **32**.
 
-**GSMA 정렬 프로파일(`*_gsma` / `*_mcgen`, 비-default)**: scorer만 공식 `gsma-evals/src/evals/*` 소스와 정렬한 additive 그룹이다. default scoring은 동결. **"공식 GSMA 완전 재현"을 주장하지 않는다**(= public 코드 정렬 시도). scorer-aligned이되 **engine은 다르다**: MC 4종은 자유 single-letter `generate_until`(`max_gen_toks:8`)로 공식 제약 디코딩(`multiple_choice(cot=False)`)과 **미정렬 — 가장 큰 미정렬 축이자 지배적 후보 격차 동인**. 생성형 `*_gsma`는 `until:[]` + `max_gen_toks`(telemath/telelogs **1024**, 3gpp **256**)이고 scorer는 공식 동일(telemath isclose 0.01 / telelogs soft 첫 정수 / 3gpp WG regex first-match). telelogs/3gpp는 `\boxed{}`/WG token 미출력 시 soft scorer가 무조건 INCORRECT → **collapse 위험**이므로 smoke emission-rate(≥0.30)가 HARD gate, 미달 시 `*_gsma_hinted` 변형으로 대체 측정. 전체 contract는 `GSMA_SCORING_CONTRACT.md` 참조.
+**GSMA 정렬 프로파일(`*_gsma` / `*_mcgen`, 비-default)**: scorer만 공식 `gsma-evals/src/evals/*` 소스와 정렬한 additive 그룹이다. default scoring은 동결. **"공식 GSMA 완전 재현"을 주장하지 않는다**(= public 코드 정렬 시도). scorer-aligned이되 **engine은 다르다**: MC 4종은 자유 single-letter `generate_until`(`max_gen_toks:8`)로 공식 제약 디코딩(`multiple_choice(cot=False)`)과 **미정렬 — 가장 큰 미정렬 축이자 지배적 후보 격차 동인**. 생성형 `*_gsma`는 `until:[]` + `max_gen_toks`(telemath/telelogs **1024**, 3gpp **256**)이고 scorer는 공식 동일(telemath isclose 0.01 / telelogs soft 첫 정수 / 3gpp WG regex first-match). telelogs/3gpp는 `\boxed{}`/WG token 미출력 시 soft scorer가 무조건 INCORRECT → **collapse 위험**이므로 smoke emission-rate(≥0.30)가 HARD gate, 미달 시 `*_gsma_hinted` 변형으로 대체 측정. 전체 contract는 `docs/GSMA_SCORING_CONTRACT.md` 참조.
 
 ## 핵심 진단 (north star — 독립 검증 완료, 귀인은 미확정)
 
@@ -85,7 +85,7 @@ MC task(legacy: `teleqna_lm_eval_baseline` / `teletables_lm_eval_baseline` / `or
 - public gemma3-4b(unweighted): teleqna 0.652 / teletables 0.273 / oranbench 0.660 / srsranbench 0.740 / telemath 0.137 / telelogs 0.117 / three_gpp 0.200 / avg 0.397.
 - local 7-task run(historical): teleqna 0.450 / teletables 0.200 / oranbench 0.367 / srsranbench 0.547 / telemath 0.010 / telelogs 0.170 / 3gpp_tsg_gen 0.070.
 
-자세한 분해와 caveat는 `REPRODUCTION_NOTES.md` 참조.
+자세한 분해와 caveat는 `docs/REPRODUCTION_NOTES.md` 참조.
 
 ## 작업 순서 (측정 → 진단 → 수정)
 
@@ -96,7 +96,7 @@ MC task(legacy: `teleqna_lm_eval_baseline` / `teletables_lm_eval_baseline` / `or
    - `telelogs`: 라벨 추출(종종 `\boxed{C6}` 형태).
    - `3gpp_tsg_gen`: 출력 JSON에서 working group 값만 추출(예: `{"WORKING GROUP":"SA5"}` → "SA5").
    - 각 parser는 소형 pytest unit test(샘플 입력→기대 추출값)를 함께 둔다.
-4. **비교·기록·패키징**: HF vs vLLM parity를 같은 모델로 비교하고, 비교 모델(`Qwen/Qwen2.5-7B-Instruct`) baseline을 추가한다. `results/`·`EXPERIMENTS.md`·`PROGRESS.md`·`outputs/latest-summary.md`(+ `outputs/run-index.jsonl`)를 갱신하고 commit한다.
+4. **비교·기록·패키징**: HF vs vLLM parity를 같은 모델로 비교하고, 비교 모델(`Qwen/Qwen2.5-7B-Instruct`) baseline을 추가한다. `results/`·`docs/EXPERIMENTS.md`·`docs/PROGRESS.md`·`outputs/latest-summary.md`(+ `outputs/run-index.jsonl`)를 갱신하고 commit한다.
 
 ## MC scoring 수정 방향 (무결성 우선)
 
@@ -118,7 +118,7 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 - **git 위생**: 변경 전 항상 `git status`. 사용자 작업을 명시 요청 없이 삭제/덮어쓰지 않는다. 변경은 작고 리뷰 가능하게, 한 commit에 무관한 변경을 섞지 않는다.
 - **lm-eval 유지**: 기존 YAML task 정의와 `utils.py` parser 개선을 다른 프레임워크 도입보다 우선한다. Inspect AI로 전면 교체하지 않는다(비교 스크립트/노트는 추가 가능).
 - **측정 우선, 한 번에 하나씩**: 추측으로 고치지 말고 변경 전후 점수를 항상 측정해 비교한다. 변경별로 작은 단위 commit + before/after 기록.
-- **결과 추적**: 의미 있는 실행은 `EXPERIMENTS.md` Run Index에 1줄 + 요약을 남긴다. raw 로그 전체를 문서에 붙이지 말고 경로만 연결한다. 평가에 영향을 주는 변경은 `PROGRESS.md`를 갱신하고, run을 했다면 `EXPERIMENTS.md`·`outputs/latest-summary.md`(+ `outputs/run-index.jsonl`)도 갱신한다.
+- **결과 추적**: 의미 있는 실행은 `docs/EXPERIMENTS.md` Run Index에 1줄 + 요약을 남긴다. raw 로그 전체를 문서에 붙이지 말고 경로만 연결한다. 평가에 영향을 주는 변경은 `docs/PROGRESS.md`를 갱신하고, run을 했다면 `docs/EXPERIMENTS.md`·`outputs/latest-summary.md`(+ `outputs/run-index.jsonl`)도 갱신한다.
 - **commit 산출물 경량 유지**: model cache, 대용량 raw 로그, checkpoint, 거대 생성 artifact를 commit하지 않는다(`.gitignore` 준수). 추적 대상 summary는 `outputs/` 하위에만 둔다.
 - **재현성 기록**: 모든 실행 명령(모델, 백엔드, few-shot, chat template 여부, batch_size, dataset split)을 기록한다. 결과가 public과 다르면 의심 원인을 정직하게 명시한다(숨기지 않는다).
 - **스코프 경계 존중**: 멀티모달/LMM/LAM, 동적 제어, Planning(Intent→Recipe / TeleYAML), RAG-grounded QA, Korean Telco QA는 **이번 범위 밖(2차 과제)**다. 끌어들이지 말 것.
@@ -126,7 +126,7 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 ## 환경 주의 (GPU 작업 전 필수)
 
 - GPU: **A100 40GB ×6** 가용. gemma3-4b는 단일 GPU로 충분.
-- 현재 `.venv`에 `lm_eval`이 **미설치 상태일 수 있다**. 설치 시 `lm-evaluation-harness/` 클론은 pin sha **`97a5e2c7`**(`97a5e2c710e2b56b9dd48f367bb6fe87bbb2c176`)로 고정한다. 자세한 재설치 SOP는 `ENVIRONMENT.md` 참조.
+- 현재 `.venv`에 `lm_eval`이 **미설치 상태일 수 있다**. 설치 시 `lm-evaluation-harness/` 클론은 pin sha **`97a5e2c7`**(`97a5e2c710e2b56b9dd48f367bb6fe87bbb2c176`)로 고정한다. 자세한 재설치 SOP는 `docs/ENVIRONMENT.md` 참조.
 - 환경 하드핀: Python 3.12.13, torch 2.11.0+cu128, transformers 5.12.1, vllm 0.23.0.
 - **vLLM은 CUDA forward-compat에 의존**한다 → GPU 작업 전 `.venv` activate가 필수다(run 스크립트는 activate를 수행함). 미적용 시 vLLM generate가 실패할 수 있으며 hf fallback을 사용한다.
 - dataset 로컬 캐시 없음(첫 run에서 다운로드). HF 접근: user=chrisjihee, org=etri-lirs (gemma/llama/qwen 접근 가능).
@@ -176,7 +176,7 @@ BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it TASKS=open_t
   CONFIRM_FULL_RUN=1 OUTPUT_PATH=results/open_telco_otfull_gsma ./run_open_telco_otfull.sh
 ```
 
-**GSMA collapse gate 절차**: ot-lite_gsma smoke(LIMIT=20)에서 telemath/telelogs `\boxed{}` 출력률과 3gpp WG-token 매치율을 측정한다. 어느 하나라도 **< 0.30**이면 full ot-full_gsma run을 BLOCK하고, 해당 task를 `*_gsma_hinted`(+1-line gold-free 출력형식 지시) 변형으로 LIMIT=20 재측정해 emission-rate 회복 시에만 사용자 승인하에 비교군으로 진행한다(절차 상세: `GSMA_SCORING_CONTRACT.md` §2.3).
+**GSMA collapse gate 절차**: ot-lite_gsma smoke(LIMIT=20)에서 telemath/telelogs `\boxed{}` 출력률과 3gpp WG-token 매치율을 측정한다. 어느 하나라도 **< 0.30**이면 full ot-full_gsma run을 BLOCK하고, 해당 task를 `*_gsma_hinted`(+1-line gold-free 출력형식 지시) 변형으로 LIMIT=20 재측정해 emission-rate 회복 시에만 사용자 승인하에 비교군으로 진행한다(절차 상세: `docs/GSMA_SCORING_CONTRACT.md` §2.3).
 
 프로덕션 실행은 raw `lm_eval` 직접 호출 대신 가드된 run 스크립트(`LIMIT=N` 또는 `CONFIRM_FULL_RUN=1`)를 사용한다.
 
@@ -188,4 +188,4 @@ BACKEND=vllm VLLM_VISIBLE_DEVICES=0 MODEL_NAME=google/gemma-3-4b-it TASKS=open_t
 - generation 변형 점수 상승을 "공식 정렬"이라 명명, default scoring 변경.
 - 승인 없는 다중 GPU 장기 run, unbounded GPU job.
 - 범위 밖 기능(멀티모달/동적/Planning/RAG/한국어셋) 선구현.
-- `results`/cache/checkpoint 무분별 commit, 문서(`EXPERIMENTS`/`PROGRESS`/`outputs`) 갱신 없이 세션 종료.
+- `results`/cache/checkpoint 무분별 commit, 문서(`docs/EXPERIMENTS`/`docs/PROGRESS`/`outputs`) 갱신 없이 세션 종료.

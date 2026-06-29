@@ -24,7 +24,7 @@
 
 ## 2026-06-27 (delivery) 다중 모델 ot-lite_gsma 평가
 
-지능네트워크연구실 전달용 6모델 `open_telco_otlite_gsma` full(unweighted task mean). 전체 분해는 `FINAL_DELIVERY_SUMMARY.md`.
+지능네트워크연구실 전달용 6모델 `open_telco_otlite_gsma` full(unweighted task mean). 전체 분해는 `NFM-Eval-Harness-delivery`의 docs/04-final-results.md.
 
 | 모델 | uw | public | delta | 구분 |
 |---|---:|---:|---:|---|

@@ -24,15 +24,12 @@
 - `open_telco_otfull_lm_eval_baseline`(구 `open_telco_otfull`)은 공개 Open Telco
   leaderboard의 7개 benchmark column을 맞추는 방향으로 구성되어 있습니다.
 - 실행 스크립트는 Hugging Face backend와 vLLM backend를 지원합니다.
-- 이후 agent가 commit된 repo 파일만 보고도 문맥을 회복할 수 있도록 Codex
-  Local/Cloud handoff 문서를 추가했습니다.
 - **2026-06-27 전달판 검증 pass(지능네트워크연구실)**: `open_telco_otlite_gsma`
   full로 6모델 평가 완료. leaderboard 3종(Qwen2.5-7B 0.4544/−0.0035,
   Falcon3-10B 0.4791/+0.0203, gemma-3-12b 0.4277/−0.0362) + 내부 비교 3종
   (Qwen3-4B 0.4463, Qwen3-14B 0.4678, DeepSeek-R1-Distill-14B 0.0514⚠).
   R1-Distill은 `enable_thinking=False`를 무시하는 reasoning 모델이라 MC가
-  구조적으로 붕괴(artifact, 능력치 아님). 전달 요약은 `FINAL_DELIVERY_SUMMARY.md`,
-  후보 계획은 `outputs/model-candidate-plan.md`. TeleTables `_gsma`=question-only
+  구조적으로 붕괴(artifact, 능력치 아님). 후보 계획은 `outputs/model-candidate-plan.md`. TeleTables `_gsma`=question-only
   =GSMA parity(저평가 아님), TeleMath 문서 max_gen_toks per-task(1024/256) 정정.
 
 ## 최근 Baseline

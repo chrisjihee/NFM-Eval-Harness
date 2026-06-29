@@ -1,8 +1,12 @@
 # Start Here — Engineering / Provenance Repo
 
-This repository (`NFM-Eval-Harness`) is **not** the recommended INL handoff entry point.
-Use **`NFM-Eval-Harness-delivery`** for handoff, onboarding, the 30-minute smoke test,
-and curated final results.
+This repository (`NFM-Eval-Harness`) is the **engineering/provenance repository** —
+development history, intermediate experiments, and diagnostic outputs live here.
+
+> **INL handoff:** Use **`NFM-Eval-Harness-delivery`** as the canonical handoff package
+> for onboarding, the 30-minute smoke test, and curated final results.
+> `HANDOFF_POINTER.md` and `INL_HANDOFF.md` have been removed; all handoff content
+> now lives in `NFM-Eval-Harness-delivery`.
 
 ## Repository role
 - Engineering source and development history
@@ -12,9 +16,10 @@ and curated final results.
 1. `README.md`
 2. `docs/engineering-repo-map.md`
 3. `docs/archive-history-index.md`
-4. `PROGRESS.md`
-5. `EXPERIMENTS.md`
-6. local `chat/` (assistant provenance; kept local/untracked — not onboarding docs)
+4. `docs/PROGRESS.md`
+5. `docs/EXPERIMENTS.md`
+6. `docs/HANDOFF.md` — background context and known risks
+7. local `chat/` (assistant provenance; kept local/untracked — not onboarding docs)
 
 ## Current execution path
 Recommended profiles remain `open_telco_otlite_gsma` / `open_telco_otfull_gsma`.

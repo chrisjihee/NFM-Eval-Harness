@@ -206,6 +206,7 @@ results/conf-*/
 # internal dev artifacts (not part of the INL delivery bundle; kept local only)
 chat/
 lm-eval-ls-task
+version-dep.txt
 
 # (PASS9) allow the engineering dir README even though outputs/* is ignored above
 !outputs/README.md

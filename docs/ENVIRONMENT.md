@@ -42,7 +42,7 @@ Run from repository root:
 ./setup-post.sh
 ```
 
-`setup-main.sh` creates `.venv`, installs project dependencies, configures vLLM runtime libraries, and writes package versions to `version-dep.txt`.
+`setup-main.sh` creates `.venv`, installs project dependencies, and configures vLLM runtime libraries. It also generates a pip-list snapshot (`version-dep.txt`) as an optional local artifact — this file is not tracked in git.
 
 ## LM-Evaluation-Harness pin
 

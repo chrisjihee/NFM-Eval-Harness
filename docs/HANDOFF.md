@@ -131,13 +131,12 @@ run_open_telco_otfull.sh    # TASKS 생략 시 기본 open_telco_otfull_gsma
 setup-pre.sh / setup-main.sh / setup-post.sh   # GPU 서버 환경 준비 3단계
 README.md / PLAN.md / PROGRESS.md / EXPERIMENTS.md / ENVIRONMENT.md / TROUBLESHOOTING.md / AGENTS.md
 TASK_MANIFEST.md / REPRODUCTION_NOTES.md
-check_vllm_runtime.py / lm-eval-ls-task / version-dep.txt
-results/  outputs/  doc/
+check_vllm_runtime.py / lm-eval-ls-task
+results/  outputs/  docs/
 ```
 - 언어 구성: Python / Shell 중심.
 - HF 백엔드, vLLM 백엔드 모두 지원. `BACKEND=vllm ... ./run_...sh`
 - 두 run 스크립트 모두 `--apply_chat_template` 항상 ON, `.venv` activate 수행.
-- 과거 Codex Local/Cloud handoff 워크플로가 문서화돼 있었으나 이제는 Claude Code가 이어받는다.
 
 ### 3.2 정확한 task 인벤토리 (정정 반영 + 2026-06 RENAME)
 
@@ -491,14 +490,14 @@ raw prompt + 약/base 모델에서 점수가 collapse(~0)할 수 있다(원인·
 ---
 
 ## 13. 새 작업자가 먼저 읽어야 할 순서
-1. `AGENTS.md` — agent 작업 규칙(단일 진입점)
-2. `CLAUDE.md` — 작업 규칙·우선순위 (얇은 진입점)
+1. `../AGENTS.md` — agent 작업 규칙(단일 진입점)
+2. `../CLAUDE.md` — 작업 규칙·우선순위 (얇은 진입점)
 3. `HANDOFF.md` — 본 문서(전체 맥락·상태·계획 요약)
 4. `REPRODUCTION_NOTES.md` — 집계방식 정정·재현성 caveat
 5. `TASK_MANIFEST.md` — task별 dataset/split/metric/parser/known issue/public column mapping
 6. `.omc/specs/deep-interview-nfm-eval-harness.md` — 확정 진단/요구사항
 7. `.omc/plans/nfm-eval-harness-consensus-plan.md` — 확정 계획·결정(current state source of truth)
-8. `README.md` / `PLAN.md` / `PROGRESS.md` / `EXPERIMENTS.md` / `ENVIRONMENT.md` / `TROUBLESHOOTING.md` — 보조 문서
+8. `../README.md` / `PLAN.md` / `PROGRESS.md` / `EXPERIMENTS.md` / `ENVIRONMENT.md` / `TROUBLESHOOTING.md` — 보조 문서
 
 ---
 
