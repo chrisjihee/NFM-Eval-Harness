@@ -2,7 +2,8 @@
 
 이 파일은 Claude Code가 이 저장소에서 작업할 때 자동으로 읽는 프로젝트 지침이다.
 배경 맥락과 현재 상태는 `docs/HANDOFF.md`에 있다. 먼저 그 문서를 읽고 이 지침으로 돌아온다.
-agent 공통 작업 규칙의 단일 진입점은 `AGENTS.md`이며 본 지침과 함께 유지된다.
+본 `CLAUDE.md`가 작업 규칙의 단일 진입점이며, Claude Code가 세션 시작 시 자동으로 읽는다.
+(이 저장소는 현재 Claude Code 단독으로 작업한다. 다른 코딩 에이전트를 도입하게 되면 그 시점에 본 지침을 기준으로 해당 에이전트용 파일을 파생한다.)
 
 ---
 
@@ -25,16 +26,15 @@ EleutherAI **lm-evaluation-harness 기반**으로 GSMA Open Telco AI 7개 통신
 
 1. `README.md`
 2. `docs/HANDOFF.md` — 현재 상태/완료·진행·다음/GPU 승인 프로토콜/결과 위치/알려진 위험.
-3. `AGENTS.md` — agent 작업 규칙 단일 진입점.
-4. `docs/REPRODUCTION_NOTES.md` — local 결과와 GSMA public leaderboard 관계, 집계방식 정정.
-5. `docs/TASK_MANIFEST.md` — task별 dataset/split/output type/metric/parser/알려진 이슈.
-6. `docs/ENVIRONMENT.md` — 환경·`lm_eval` pin·재설치 절차.
-7. `docs/TROUBLESHOOTING.md` — 알려진 장애 및 회피.
-8. `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/EXPERIMENTS.md`, `outputs/latest-summary.md`, `open_telco_lm_eval/README.md`.
+3. `docs/REPRODUCTION_NOTES.md` — local 결과와 GSMA public leaderboard 관계, 집계방식 정정.
+4. `docs/TASK_MANIFEST.md` — task별 dataset/split/output type/metric/parser/알려진 이슈.
+5. `docs/ENVIRONMENT.md` — 환경·`lm_eval` pin·재설치 절차.
+6. `docs/TROUBLESHOOTING.md` — 알려진 장애 및 회피.
+7. `docs/PLAN.md`, `docs/PROGRESS.md`, `docs/EXPERIMENTS.md`, `outputs/latest-summary.md`, `open_telco_lm_eval/README.md`.
 
-새 세션 문맥 회복의 최단 경로는 `FIRST_PROMPT.md`에 정리되어 있다(읽을 순서: AGENTS → CLAUDE → HANDOFF → REPRODUCTION_NOTES → TASK_MANIFEST).
+저장소 진입점/역할 구분은 root `START_HERE_ENGINEERING.md`에 있다(engineering/provenance vs 전달 정본 `NFM-Eval-Harness-delivery`).
 
-문서 체계: `CLAUDE.md` / `docs/HANDOFF.md` / `FIRST_PROMPT.md` / `docs/TASK_MANIFEST.md` / `docs/REPRODUCTION_NOTES.md` / `docs/ENVIRONMENT.md` / `docs/TROUBLESHOOTING.md`.
+문서 체계: `CLAUDE.md`(본 지침·자동 read) / `docs/HANDOFF.md` / `docs/TASK_MANIFEST.md` / `docs/REPRODUCTION_NOTES.md` / `docs/ENVIRONMENT.md` / `docs/TROUBLESHOOTING.md`. 전달 정본은 별도 저장소 `NFM-Eval-Harness-delivery`.
 
 그다음 코드를 본다.
 - `run_open_telco_otlite.sh`, `run_open_telco_otfull.sh`, `setup-pre.sh` / `setup-main.sh` / `setup-post.sh`
@@ -122,11 +122,12 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 - **commit 산출물 경량 유지**: model cache, 대용량 raw 로그, checkpoint, 거대 생성 artifact를 commit하지 않는다(`.gitignore` 준수). 추적 대상 summary는 `outputs/` 하위에만 둔다.
 - **재현성 기록**: 모든 실행 명령(모델, 백엔드, few-shot, chat template 여부, batch_size, dataset split)을 기록한다. 결과가 public과 다르면 의심 원인을 정직하게 명시한다(숨기지 않는다).
 - **스코프 경계 존중**: 멀티모달/LMM/LAM, 동적 제어, Planning(Intent→Recipe / TeleYAML), RAG-grounded QA, Korean Telco QA는 **이번 범위 밖(2차 과제)**다. 끌어들이지 말 것.
+- **변경 후 체크리스트**(평가 동작에 영향을 준 경우): 관련 task README/문서 갱신 → `docs/PROGRESS.md`에 진행 기록 → run을 했으면 `docs/EXPERIMENTS.md` 요약 + `outputs/latest-summary.md` 반영 → 환경별 이슈는 `docs/ENVIRONMENT.md` 또는 `docs/TROUBLESHOOTING.md`에 남긴다.
 
 ## 환경 주의 (GPU 작업 전 필수)
 
 - GPU: **A100 40GB ×6** 가용. gemma3-4b는 단일 GPU로 충분.
-- 현재 `.venv`에 `lm_eval`이 **미설치 상태일 수 있다**. 설치 시 `lm-evaluation-harness/` 클론은 pin sha **`97a5e2c7`**(`97a5e2c710e2b56b9dd48f367bb6fe87bbb2c176`)로 고정한다. 자세한 재설치 SOP는 `docs/ENVIRONMENT.md` 참조.
+- `lm-evaluation-harness/`(pin sha **`97a5e2c7`** = `97a5e2c710e2b56b9dd48f367bb6fe87bbb2c176`)는 `setup-post.sh`가 clone·editable 설치한다(`--no-deps` + lm-eval core deps). `.venv`에 미설치이면 `make smoke`가 설치 명령을 안내한다. 재설치 SOP는 `docs/ENVIRONMENT.md` 참조.
 - 환경 하드핀: Python 3.12.13, torch 2.11.0+cu128, transformers 5.12.1, vllm 0.23.0.
 - **vLLM은 CUDA forward-compat에 의존**한다 → GPU 작업 전 `.venv` activate가 필수다(run 스크립트는 activate를 수행함). 미적용 시 vLLM generate가 실패할 수 있으며 hf fallback을 사용한다.
 - dataset 로컬 캐시 없음(첫 run에서 다운로드). HF 접근: user=chrisjihee, org=etri-lirs (gemma/llama/qwen 접근 가능).
@@ -137,7 +138,7 @@ generation-based MC는 **별도 실험 task family `open_telco_*_mcgen`(비-defa
 
 - run 스크립트는 `--apply_chat_template`가 **항상 ON**이다. 따라서 chat template 효과를 보려면 끄거나 비교하는 형태로 실험한다.
 - `run_open_telco_*.sh`의 주요 env: `MODEL_NAME` / `BACKEND`(hf|vllm) / `DEVICE` / `BATCH_SIZE` / `TASKS` / `VLLM_VISIBLE_DEVICES` / `GPU_MEMORY_UTILIZATION` / `MAX_MODEL_LEN` / `TENSOR_PARALLEL_SIZE`.
-- `TELETABLES_ROOT`는 run 스크립트가 set하지 않는다 → teletables 원본 표가 필요하면 별도 export. 미설정 시 teletables는 metadata-only(저평가/degraded).
+- `TELETABLES_ROOT`는 run 스크립트가 set하지 않는다. 기본 `_gsma` profile은 question+choices parity로 평가하므로 저평가가 아니다 — legacy/superset 표 원본이 필요할 때만 별도 export(기본 경로엔 불필요).
 
 > **task name 규칙 재확인.** run script 기본값(TASKS 생략)은 `_gsma`(기본/권장). bare `open_telco_otlite`/`open_telco_otfull`은 rename되어 실행 불가(run script `exit 2`). legacy lm-eval baseline은 `_lm_eval_baseline` suffix를 명시해야 한다(diagnostic only).
 

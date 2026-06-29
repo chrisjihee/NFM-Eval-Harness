@@ -148,7 +148,7 @@ make delivery-check
 | `outputs/overnight-otfull-results.md` | 최신 핵심 결과(ot-full 14종 full split) |
 | `outputs/model-candidate-plan-extended.md` | 확장 후보 pool + ot-lite 결과 |
 | `docs/REPRODUCTION_NOTES.md` / `docs/GSMA_SCORING_CONTRACT.md` | 재현 caveat / scoring contract |
-| `docs/TASK_MANIFEST.md` / `docs/HANDOFF.md` / `AGENTS.md` | task별 상세 / 배경 / 작업 규칙 |
+| `docs/TASK_MANIFEST.md` / `docs/HANDOFF.md` / `CLAUDE.md` | task별 상세 / 배경 / 작업 규칙 |
 | `docs/EXPERIMENTS.md` / `docs/PROGRESS.md` | 실행 이력 / 현재 상태 |
 | `docs/ENVIRONMENT.md` / `docs/TROUBLESHOOTING.md` | 환경 설정 / 장애 회피 |
 

@@ -126,6 +126,6 @@ deep-interview → ralplan(consensus) → autopilot 흐름으로 진행. 계획:
 
 ## Handoff Notes
 
-- Agent 작업 규칙의 시작점은 `AGENTS.md`입니다.
+- 작업 규칙의 시작점은 `CLAUDE.md`입니다.
 - 전체 log를 계획 문서에 붙여넣기보다 `EXPERIMENTS.md`에 실행 요약을 남깁니다.
 - 최신 경량 결과 snapshot은 `outputs/latest-summary.md`에 유지합니다.

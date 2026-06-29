@@ -3,7 +3,7 @@
 > 작성일: 2026-06-27
 > 목적: 이 저장소(`NFM-Eval-Harness`)를 이어받아 작업하는 Claude Code가 프로젝트의 전체 맥락,
 > 현재 구현 수준, 확정된 진단, 그리고 무엇을 마무리해야 하는지를 한 번에 파악하기 위한 문서.
-> 이 문서는 배경·상태 전달용이다. 실제 작업 규칙·우선순위는 `CLAUDE.md`, agent 작업 규칙은 `AGENTS.md`를 따른다.
+> 이 문서는 배경·상태 전달용이다. 실제 작업 규칙·우선순위는 `../CLAUDE.md`를 따른다.
 > 확정 진단/요구사항의 원전(source of truth)은 `.omc/specs/deep-interview-nfm-eval-harness.md`와
 > `.omc/plans/nfm-eval-harness-consensus-plan.md`(APPROVED)이다.
 
@@ -490,7 +490,7 @@ raw prompt + 약/base 모델에서 점수가 collapse(~0)할 수 있다(원인·
 ---
 
 ## 13. 새 작업자가 먼저 읽어야 할 순서
-1. `../AGENTS.md` — agent 작업 규칙(단일 진입점)
+1. `../CLAUDE.md` — 작업 규칙(단일 진입점)
 2. `../CLAUDE.md` — 작업 규칙·우선순위 (얇은 진입점)
 3. `HANDOFF.md` — 본 문서(전체 맥락·상태·계획 요약)
 4. `REPRODUCTION_NOTES.md` — 집계방식 정정·재현성 caveat
