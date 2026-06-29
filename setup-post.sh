@@ -20,3 +20,6 @@ shopt -s globstar
 rm -f .cache_hf; ln -s ~/.cache/huggingface ./.cache_hf
 hf auth whoami
 hf auth login
+
+# Optional for link
+ln -s ~/.claude .claude_home
