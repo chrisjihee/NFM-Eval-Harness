@@ -5,6 +5,7 @@
 ## 목차
 - **세션1** — deep-interview → PR#1~#6: GSMA 재현 진단(격차=집계 artifact), `_gsma` 정렬, 이름/실행경로 정리, 다중 모델 검증, INL 패키징.
 - **세션2** — PASS7~: 별도 slim handoff 저장소 `NFM-Eval-Harness-delivery` 생성 + 10모델×2profile×3회 rerun, 최종 polish, 그리고 engineering 원본 저장소 정리(역할 명확화·Codex 제거·root slim·AI에이전트 문서 통합).
+- **세션3** — 설치/백엔드 정리·두 저장소 sync·compare 가드·문서 검증: lm_eval을 버전 고정 pip(`uv pip install "lm_eval[hf,vllm]==0.4.12"`)로 전환 + 기본 backend을 vLLM로, 전달본·원본 동일 적용(sync), compare 스크립트에 bounded-run(LIMIT) 경고 가드 추가, 삭제된 root 문서 참조 정리, 문서 명령·예시 전수 검증·정정(수치/모델 id/과장 완화), 공통 파일 byte-identical 유지 + `make test`/`aggregate_repeats.py` sync.
 
 ---
 
@@ -4394,5 +4395,99 @@ AI 코딩 에이전트 문서를 정리하겠습니다 — `AGENTS.md`를 `CLAUD
 **참고 — chat/ 저장 계획**
 
 말씀하신 "Claude 대화를 `chat/`에 최종 저장 + 정리" 계획 관련: 현재 원본 `.gitignore`에 `chat/`이 ignore되어 있어, 최종 대화를 git에 추적하시려면 `.gitignore`에서 `chat/`을 풀어야 합니다. 정리하신 최종 대화 파일을 추적 대상으로 둘지(개행 정리·축약 후) 결정해 주시면, `.gitignore` 조정 + `chat/README.md`(provenance 설명) 추가까지 도와드리겠습니다. 지금은 계획만 접수했고 `chat/`은 건드리지 않았습니다.
+
+---
+
+# 세션3 — 설치/백엔드 정리 · 두 저장소 sync · compare 가드 · 문서 검증
+
+> 이 통합 대화록을 만든 직후 이어서 수행한 작업이다. 핵심: lm_eval 설치를 버전 고정 pip로 전환하고 기본 backend을 vLLM로 바꾼 뒤, 전달본(`NFM-Eval-Harness-delivery`)과 원본(`NFM-Eval-Harness`) 두 저장소에 **동일 방식으로** 적용(sync)하고, compare 스크립트에 bounded-run 경고 가드를 추가하고, 두 저장소의 문서 명령·예시를 전수 검증·정정했다. 모든 변경은 history rewrite/force push 없이 새 commit으로만 했고, 과거 로그(`docs/CLAUDE_WORKLOG.md`·과거 PROGRESS/EXPERIMENTS)는 보존했다.
+
+---
+
+### 👤 사용자
+
+(ultracode 모드) `~/code/NFM-Eval-Harness-delivery`에서 대표 full run을 HF와 vLLM로 각각 실행했더니 HF에서는 `telelogs_gsma` 0.0, vLLM에서는 0.12가 나왔다. vLLM이 속도·안정성 면에서 더 나아 보인다. README·docs/00-overview·docs/01-quickstart·setup-post.sh 등을 임의로 수정해 두었다. 환경 설치도 lm_eval을 git clone하는 대신 버전을 명시해 `uv pip install "lm_eval[hf,vllm]==0.4.12"`로 하는 게 낫겠다. 폴더 내부 파일들을 일관되게 모두 바꿔달라(이미 commit/push한 것도 있으니 git log로 상황 파악).
+
+### 🤖 Claude
+
+전달본을 두 결정(① lm_eval = 버전 고정 pip, ② 기본 backend = vLLM)에 맞춰 일관 정리했다. HF가 telelogs를 0.0으로 만든 원인은 HF 백엔드의 긴 생성형 입력 left-truncation으로, vLLM은 이를 회피한다.
+
+- 🔧 조사: `git log`/`status`로 사용자 커밋 확인, 옛 방식 참조 전수 grep(`97a5e2c7` / `git clone lm-evaluation-harness` / `--no-deps` / `BACKEND hf` 기본); `pyproject.toml`이 torch/vllm/transformers를 선설치하므로 이후 `lm_eval` pip이 핀을 덮지 않음을 확인
+- 🔧 Edit: `setup-post.sh` — `uv pip install "lm_eval[hf,vllm]==0.4.12"` 유지 + 중복 `git clone lm-evaluation-harness` 제거(redundant), `gsma-evals`는 선택적 참조 clone(런타임 의존성 아님)
+- 🔧 Edit: `run_open_telco_{otlite,otfull}.sh` — `BACKEND` 기본 `hf`→`vllm`, `MAX_MODEL_LEN=8192`·`GPU_MEMORY_UTILIZATION=0.9` 기본값(맨손 vLLM의 128K KV-cache OOM 방지 + 일관성); HF 분기 불변(`MAX_LENGTH` 사용)
+- 🔧 Edit: README·docs/01·05·06·07·archive·presentation-prompt·`open_telco_lm_eval/README`·smoke_test·`.gitignore` 주석 — 설치=pip 0.4.12, 기본 backend=vLLM(HF는 truncation fallback)으로 일관화; SHA `97a5e2c7`(=`v0.4.12`+12 commits)→PyPI `0.4.12` 정직 표기
+- 🔧 적대적 감사(3-에이전트 Workflow): docs·runtime clean, completeness가 backend 예시 2곳 누락 적발 → `open_telco_lm_eval/README`의 backend-override 문구, docs/05 OOM의 `# HF 백엔드` 명령에 `BACKEND=hf` 누락 수정
+- 🔧 결과: commit **7543ced** → push, `bash -n`/`make smoke`/잔여 grep clean, **make delivery-check PASS 8/8**. (즉시 안내: compare는 LIMIT=1 smoke가 아니라 전체 run 결과로 하라.)
+
+### 👤 사용자
+
+원본 repo `/raid/chrisjihee/code/NFM-Eval-Harness` 폴더도 같은 방식으로 sync를 맞춰달라.
+
+### 🤖 Claude
+
+원본(provenance)에 동일 두 결정을 적용했다 — **history rewrite/force push 없이 새 commit만**. 원본은 setup-post에 lm_eval 설치가 아예 없었고(수동/문서 안내), `.venv`는 editable clone(`0.4.13.dev0` = SHA `97a5e2c7`)이라 처방만 pip 0.4.12로 sync하고 현 .venv는 유지했다.
+
+- 🔧 Edit: `setup-post.sh`(pip 설치 추가 + lm-eval clone 제거), `run_open_telco_*.sh`(vLLM 기본), `scripts/smoke_test.sh`, `CLAUDE.md`(설치/백엔드/예시 명령), README, `docs/ENVIRONMENT`·`TROUBLESHOOTING`·`lm-evaluation-harness-reference`·`HANDOFF`(현행 상태·위험 갱신), `open_telco_lm_eval/README`
+- 🔧 보존: `docs/PROGRESS.md`는 과거 로그 무수정 + 2026-06-29 항목만 추가; `docs/CLAUDE_WORKLOG.md`·과거 PROGRESS/EXPERIMENTS 무수정; 잔여 `97a5e2c7` 5건은 의도된 "과거 SHA → 현재 pip" 정직 표기
+- 🔧 적대적 감사(3-에이전트): 현재-지시문 누락 5건 적발 → HANDOFF 환경 인벤토리(현재 설치를 git-clone으로 단정)/411행 `DEVICE=cuda:0`(vLLM-default에서 no-op)/138행 backend 대칭서술, `lm-evaluation-harness-reference`의 ot-full hf-우선 예시·unpinned pip 블록 수정
+- 🔧 결과: commit **13952a0** → push, **make delivery-check PASS**. 메모리 갱신(두 repo 동기화).
+
+### 👤 사용자
+
+(전달본에서) 필요없다고 보고 `DELIVERY_PACKAGE.md`·`HANDOFF.md`·`PACKAGING_CHECKLIST.md`·`RESULTS_MANIFEST.md`·`USAGE_SCOPE.md`를 지우고 commit/push했더니 `make delivery-check`가 broken doc link(`README → USAGE_SCOPE.md`)로 실패한다. 지운 문서 관련 업데이트 + delivery-check 통과 + 두 repo sync까지 마무리해달라.
+
+### 🤖 Claude
+
+삭제 문서의 내용은 이미 `docs/06`·`07`·`08`+README에 있어 삭제는 안전했고, 잔여 참조만 정리했다.
+
+- 🔧 Edit: README 라이선스(죽은 `USAGE_SCOPE.md` 링크 제거 → docs/07로), `docs/07`(dangling 참조 제거), `docs/archive/{README,final-audit-delta}`("이후 제거됨" 정직 주석; PR#6/PASS8 기록은 보존)
+- 🔧 검증: 삭제 파일로의 markdown 링크 0; commit **eac6f38** → push, **make delivery-check PASS 8/8**
+- 🔧 원본 점검: 삭제 파일을 구조적으로 참조하는 곳 없음(`START_HERE`의 언급은 원본 자신의 과거 파일) → 원본 무변경. 메모리에 "root 메타 문서 제거" 기록.
+
+### 👤 사용자
+
+`docs/01-quickstart`의 "5단계 — 결과 비교" 예시대로 compare를 실행했는데 결과가 이상하다(teleqna 0.0, teletables 1.0, …, local mean 0.2857). 입력을 잘못한 건지, 다른 문제인지 정밀 검사하고 문제가 있으면 고쳐달라.
+
+### 🤖 Claude
+
+원인은 `--local-result`가 **LIMIT=1 smoke 결과**였던 것이다. 해당 JSON은 `config.limit:1.0`이고 모든 task `effective:1`(예: teleqna 1/1000) → task당 1샘플이라 acc가 0/1 noise → delta가 무의미하다. 스크립트는 정상 동작했다(나쁜 입력).
+
+- 🔧 진단: 결과 JSON의 `n-samples`/`limit` 확인; 정본 full 결과 경로 확인(`results/final/otlite-gsma-gemma3-4b/run1/…`)
+- 🔧 Edit: `scripts/compare_gsma_leaderboard.py` — bounded-run 가드 추가(`config.limit` 설정 / `n-samples` effective<original / <30샘플 → stdout+stderr+markdown 상단에 BOUNDED/SMOKE 경고). full run은 무경고
+- 🔧 검증: LIMIT=1→경고, full→정상 delta(teleqna 0.656 vs public 0.652); 두 repo 스크립트 byte-identical(cp), py_compile OK
+- 🔧 Edit: `docs/01`·`06` §5 — "`--local-result`는 전체 run이어야 함" 명시; `.gitignore`에 ad-hoc default-path 결과(`results/open_telco_*/`) ignore 추가 → 맨손 smoke가 tree를 더럽히지 않음
+- 🔧 결과: 전달본 **e247fbd** / 원본 **1fdbf08** → push, **delivery-check 양쪽 PASS**
+
+### 👤 사용자 (`/oh-my-claudecode:autopilot`)
+
+전반적으로 두 repo의 문서 명령·예시가 모두 잘 동작하는지 다시 검증하고, 의도와 다른 것은 원인 분석·해결, 과장/과도한 설명은 더 사실적·겸손하게, 외부 전달 시 의문/이상 피드백이 없도록 철저히 검증·업데이트해달라. 공통 요소는 모두 sync.
+
+### 🤖 Claude
+
+autopilot 검증·수정 패스를 6-에이전트 Workflow로 실행한 뒤 합성·수정했다.
+
+- 🔧 감사(6-에이전트): 명령 실행 검증(A,D)·sync diff(F)는 충실(make smoke/test/delivery-check, bare-name exit 2, compare/aggregate `--help`, setup URL 모두 문서대로). 수치/과장 lens(B,C,E)는 placeholder만 반환 → 과장·문구 검증은 직접 grep+판단으로 재수행
+- 🔧 정정(delivery): docs/00·01 sanity anchor `0.3992/0.3926`(옛 단일-run)→정본 `0.3956/0.3887`(docs/04 3회 평균); docs/05 없는 id `Qwen/Qwen3-32B-Instruct`→`Qwen/Qwen3-32B`; docs/07 "5종"→"6종"; docs/04 "근접 재현"→"근접(공식 재현 아님)"; README/quickstart `.venv` 사용 안내
+- 🔧 정정(engineering): README·START_HERE의 "30분" acceptance 약속 제거(겸손·delivery와 sync); HANDOFF §7 구현 정정 주석(plan이 명명한 `make test`/`scoring_ablation.py`/`test_parsers.py`/`AGENTS.md`/`FIRST_PROMPT.md`의 실제 전달형태 — plan 원문은 history로 보존)
+- 🔧 sync: `make test` 타깃을 양쪽 Makefile에 추가; 누락됐던 `scripts/aggregate_repeats.py`를 원본에 추가; 공통 13개 파일 전부 byte-identical 확인
+- 🔧 검증: make smoke / make test(73 passed) / make delivery-check 양쪽 green; 과장 잔여 0(남은 "재현/공식"은 전부 정직한 부정문); 옛 0.3992는 원본에 라벨된 PR#2 historical로만 잔존
+- 🔧 결과: 전달본 **7bbec43** / 원본 **417fae3** → push
+
+### 👤 사용자
+
+업데이트 작업이 모두 끝났나요?
+
+### 🤖 Claude
+
+네 — 두 repo 모두 로컬=원격 동기화, 미커밋 0건, `make delivery-check` PASS(전달본 8/8·원본 7/7), `make smoke`/`make test` green, 공통 파일 byte-identical. 외부 전달 가능한 일관된 상태다.
+
+| repo | 로컬=원격 | gate |
+|---|---|---|
+| NFM-Eval-Harness-delivery | `7bbec43` | delivery-check PASS 8/8 |
+| NFM-Eval-Harness (원본) | `417fae3` | delivery-check PASS 7/7 |
+
+---
+
+> 이후 본 대화록(`docs/CLAUDE_WORKLOG.md`)에 위 세션3을 추가했다. 원본 export(`docs/CLAUDE_WORKLOG-0629.md`)는 로컬 보존(미추적)한다 — `.gitignore`가 `docs/CLAUDE_WORKLOG-*.md`를 무시하므로 통합본만 추적된다.
 
 

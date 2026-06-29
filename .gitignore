@@ -208,6 +208,9 @@ chat/*
 !chat/CLAUDE_WORKLOG.md
 lm-eval-ls-task
 version-dep.txt
+# Raw per-export Claude TUI dumps (e.g. docs/CLAUDE_WORKLOG-0629.md) are kept local
+# for re-derivation; only the consolidated docs/CLAUDE_WORKLOG.md is tracked.
+docs/CLAUDE_WORKLOG-*.md
 
 # (PASS9) allow the engineering dir README even though outputs/* is ignored above
 !outputs/README.md
