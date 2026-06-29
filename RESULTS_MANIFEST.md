@@ -1,5 +1,11 @@
 # RESULTS MANIFEST — NFM-Eval-Harness (INL delivery)
 
+> **Historical / engineering note:** This file belongs to the engineering/provenance repository.
+> For the current INL handoff package and curated final results, use `NFM-Eval-Harness-delivery`.
+> Some commit hashes, result paths, or operational notes may reflect the state at the time this file was written.
+>
+> **역사/개발 메모:** 이 파일은 engineering/provenance 저장소의 문서입니다. 현재 INL 전달 정본과 최종 curated 결과는 `NFM-Eval-Harness-delivery`를 기준으로 확인하세요. 본문 일부 commit hash·result path·운영 메모는 작성 당시 상태를 반영할 수 있습니다.
+
 기준: `main` (PR #1~#5 merged, `7129050`). 이 문서는 **전달 산출물(evidence)의 위치·추적 여부·공유 안전성**을 정리한 manifest다.
 **점수 수치의 단일 출처(single source of truth)**는 아래 문서들이며, 본 manifest는 수치를 재기재하지 않는다.
 

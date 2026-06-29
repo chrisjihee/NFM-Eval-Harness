@@ -206,3 +206,21 @@ results/conf-*/
 # internal dev artifacts (not part of the INL delivery bundle; kept local only)
 chat/
 lm-eval-ls-task
+
+# (PASS9) allow the engineering dir README even though outputs/* is ignored above
+!outputs/README.md
+
+# (PASS9) guard against accidental commits of model weights / raw dumps
+# (already-tracked files are unaffected; this only prevents NEW additions)
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+*.ggml
+*.out
+*.err
+results/tmp*/
+results/debug*/
+outputs/tmp*/
+outputs/debug*/

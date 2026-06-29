@@ -1,5 +1,12 @@
 # NFM-Eval-Harness
 
+> **Repository role:** This is the engineering/provenance repository for NFM-Eval-Harness.
+> For INL handoff, onboarding, the 30-minute smoke test, and curated final results, use
+> **`NFM-Eval-Harness-delivery`** as the canonical handoff package.
+>
+> **저장소 역할:** 이 저장소는 개발·실험·증빙을 보존하는 engineering/provenance 저장소입니다.
+> 지능네트워크연구실 전달·인수·30분 smoke test·최종 결과 확인은 **`NFM-Eval-Harness-delivery`**를 정본으로 사용하세요.
+
 `NFM-Eval-Harness`는 NFM-LLM baseline 평가를 위해 GSMA Open Telco benchmark
 task를 실행하는 가벼운 evaluation harness입니다. Open Telco `ot-lite`와
 `ot-full` dataset을 `lm-eval` custom task로 정의하고, GPU 서버에서 Hugging

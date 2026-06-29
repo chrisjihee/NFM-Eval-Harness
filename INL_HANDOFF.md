@@ -1,5 +1,11 @@
 # INL_HANDOFF — 지능네트워크연구실 인수 가이드
 
+> **Historical / engineering note:** This file belongs to the engineering/provenance repository.
+> For the current INL handoff package and curated final results, use `NFM-Eval-Harness-delivery`.
+> Some commit hashes, result paths, or operational notes may reflect the state at the time this file was written.
+>
+> **역사/개발 메모:** 이 파일은 engineering/provenance 저장소의 문서입니다. 현재 INL 전달 정본과 최종 curated 결과는 `NFM-Eval-Harness-delivery`를 기준으로 확인하세요. 본문 일부 commit hash·result path·운영 메모는 작성 당시 상태를 반영할 수 있습니다.
+
 기준: `main` (PR #1~#5 merged, `7129050`) · 2026-06-28.
 이 문서는 **처음 인수하는 분**을 위한 시작점입니다. 30분이면 무엇인지·어떻게 돌리는지·결과가 무슨 의미인지 파악할 수 있습니다.
 

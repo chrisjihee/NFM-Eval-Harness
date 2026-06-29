@@ -1,5 +1,11 @@
 # PACKAGING CHECKLIST — INL delivery
 
+> **Historical / engineering note:** This file belongs to the engineering/provenance repository.
+> For the current INL handoff package and curated final results, use `NFM-Eval-Harness-delivery`.
+> Some commit hashes, result paths, or operational notes may reflect the state at the time this file was written.
+>
+> **역사/개발 메모:** 이 파일은 engineering/provenance 저장소의 문서입니다. 현재 INL 전달 정본과 최종 curated 결과는 `NFM-Eval-Harness-delivery`를 기준으로 확인하세요. 본문 일부 commit hash·result path·운영 메모는 작성 당시 상태를 반영할 수 있습니다.
+
 전달(또는 release tag) 직전 점검. 대부분 `make delivery-check` 한 번으로 자동 확인된다.
 
 ## 자동 점검 (`make delivery-check`)
