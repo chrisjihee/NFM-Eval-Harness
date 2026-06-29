@@ -96,6 +96,9 @@ python scripts/compare_gsma_leaderboard.py --profile gsma --model gemma3-4b \
 ```
 
 > public 비교 기준은 lm-eval group acc가 아니라 **7-task unweighted average**입니다.
+> `--local-result`는 **전체 run(LIMIT 없이) 결과 JSON**이어야 합니다 — `LIMIT=N` smoke 결과는
+> task당 표본이 적어 acc가 0/1 noise가 되어 delta가 무의미하며, 이 경우 스크립트가 상단에
+> BOUNDED/SMOKE 경고를 출력합니다.
 
 PR#2 결과 (gemma3-4b): `open_telco_otlite_gsma` 0.3992 / `open_telco_otfull_gsma` 0.3926 ≈ public 0.397.
 
